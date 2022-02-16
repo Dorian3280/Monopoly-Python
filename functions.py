@@ -33,9 +33,11 @@ def refreshElement(element):
 
 def refreshElements(*elements):
     for element in elements:
-        element.clear() 
+        element.clear()
         element.border()
         element.refresh()
+
+
 
 def write(component, y, x, text, color=COLORS[9]):
     component.addstr(y, x, text, color)

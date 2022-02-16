@@ -28,6 +28,7 @@ class Player:
         self.countDouble = 0
         self.dices = None
         self.turn = True
+        self.__historyCount = 1
         self.displayPlayer()
 
     @property
@@ -48,6 +49,12 @@ class Player:
         self.__location = x
         self.displayPlayer()
 
+    @property
+    def historyCount(self):
+        temp = self.__historyCount
+        self.__historyCount += 1
+        return temp
+    
     def displayPlayer(self):
         win = displayElement(4, 50, 1 + self.id * 4, 140)
         write(win, 1, 1, f"Joueur {self.id} : {self.money} €")
@@ -86,22 +93,26 @@ class Player:
             case["idFamily"], case["membership"].index(case["idProperty"]), 2
         ]
 
-    def checkState(self, case):
-        if self.isFamily(case):
-            built = self.isBuilt(case["id"])
-            if built == 5:
-                return "hotel"
-            elif built:
-                return f"house_{built}"
-            else:
-                return "2rent"
-        return "rent"
+    def getPrice(self, case):
+        isFamily = self.isFamily(case)
+        if case['type'] == 'property':
+            if isFamily:
+                built = self.isBuilt(case["id"])
+                if built == 5:
+                    return case["hotel"]
+                elif built:
+                    return case[f"house_{built}"]
+                else:
+                    return case["rent"] * 2
+            return case["rent"]
+        elif case['type'] == 'station':
+            return case['rent'] * np.count_nonzero(self.own[case['idFamily'], :, 0])
+        else:
+            return 4 * np.sum(self.dices) if not isFamily else 10 * np.sum(self.dices)
 
     def endTurn(self):
-        if self.double:
-            self.double = False
-            return False
-        return True
+        self.__historyCount = 1
+        self.turn = True
 
     def checkActions(self):
         # Roll dice
@@ -126,3 +137,4 @@ class Player:
         # End turn
         if not self.turn:
             yield 5
+            

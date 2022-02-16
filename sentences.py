@@ -7,8 +7,11 @@ titleActions = 'Effectuer une action'
 titleHistory = 'Historique'
 diceSentence = 'Vous avez fait'
 buySentence = 'Vous avez acheter'
+locationSentence = 'Emplacement :'
 buy = 'Acheter'
 nobuy = 'Ne pas acheter'
+lost = 'Vous avez perdu'
+win = 'Vous avez gagne'
 ACTIONS = [
     "Jeter les des",
     "Hypothequer une propriete",
