@@ -2,18 +2,19 @@ import curses
 import numpy as np
 
 from cases import cases
+from functions import *
 from sentences import *
-from constants import colors
+from constants import COLORS
 
 stdscr = curses.initscr()
 resolution = curses.LINES, curses.COLS
-model = (
+model = [
     len(i["membership"])
     for i in sorted(
         cases, key=lambda x: x["idProperty"] if "idProperty" in x.keys() else np.Inf
     )
     if "idProperty" in i.keys() and i["membership"][0] == i["idProperty"]
-)
+]
 
 
 class Player:
@@ -23,8 +24,10 @@ class Player:
         self.__money = 1500
         self.__location = 0
         self.own = np.zeros((10, 4, 3))
-        self.double = (False, 0)
-        self.endTurn = False
+        self.double = False
+        self.countDouble = 0
+        self.dices = None
+        self.turn = True
         self.displayPlayer()
 
     @property
@@ -33,13 +36,8 @@ class Player:
 
     @money.setter
     def money(self, x):
-        bool = self.__money > x
-        amount = abs(self.__money - x)
         self.__money = x
         self.displayPlayer()
-        print(
-            f"""Le joueur {self.id} a {"perdu" if bool else "gagné"} {amount} et a maintenant {self.__money} €."""
-        )
 
     @property
     def location(self):
@@ -51,16 +49,22 @@ class Player:
         self.displayPlayer()
 
     def displayPlayer(self):
-        win = curses.newwin(4, 20, 1 + self.id * 4, 90)
-        win.border()
-        win.addstr(1, 1, f"Joueur {self.id} : {self.money} €")
-        win.addstr(
+        win = displayElement(4, 50, 1 + self.id * 4, 140)
+        write(win, 1, 1, f"Joueur {self.id} : {self.money} €")
+        write(
+            win,
             2,
             1,
             f"{cases[self.location]['name']}",
-            colors[cases[self.location]["idColor"]],
+            COLORS[cases[self.location]["idColor"]],
         )
-        win.refresh()
+
+    def payTo(self, player, amount):
+        self.money = self.money - amount
+        player.money = player.money + amount
+
+    def transaction(self, amount):
+        self.money = self.money + amount
 
     def hasFamily(self):
         return any(
@@ -71,15 +75,38 @@ class Player:
             for i, z in zip(model, range(10))
         )
 
-    def isFamily(self, id):
-        idFamily = cases[id]["idFamily"]
+    def isFamily(self, case):
+        idFamily = case['idFamily']
         return all(self.own[idFamily, : model[idFamily], 0]) and all(
             self.own[idFamily, : model[idFamily], 1] == 0
         )
 
+    def isBuilt(self, case):
+        return self.own[
+            case["idFamily"], case["membership"].index(case["idProperty"]), 2
+        ]
+
+    def checkState(self, case):
+        if self.isFamily(case):
+            built = self.isBuilt(case["id"])
+            if built == 5:
+                return "hotel"
+            elif built:
+                return f"house_{built}"
+            else:
+                return "2rent"
+        return "rent"
+
+    def endTurn(self):
+        if self.double:
+            self.double = False
+            return False
+        return True
+
     def checkActions(self):
         # Roll dice
-        yield 0
+        if self.turn:
+            yield 0
         # Mortgage
         if np.any(self.own[:, :, 0]) and np.any(
             self.own[~np.all(self.own == 0, axis=2)][:, 1] == 0
@@ -97,5 +124,5 @@ class Player:
         if np.any(self.own[:, :, 2]):
             yield 4
         # End turn
-        if self.endTurn:
+        if not self.turn:
             yield 5

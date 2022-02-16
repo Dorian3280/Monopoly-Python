@@ -1,7 +1,7 @@
 import curses
 
 
-stdscr = curses.initscr()
+std = curses.initscr()
 
 
 def color_initialize():
@@ -31,4 +31,4 @@ def color_initialize():
     )
 
 
-colors = color_initialize()
+COLORS = color_initialize()
