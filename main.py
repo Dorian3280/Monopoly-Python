@@ -34,19 +34,31 @@ def main(std) -> int:
     iterPlayers = players.__iter__()
     # random.shuffle(chanceCards)
     # random.shuffle(communityChestCards)
-    
+
+    joueurID = -1
+
     while players:
 
         try:
             player = next(iterPlayers)
+            if player.bankruptcy:
+                players.remove(player.id)
+                break
         except StopIteration:
             iterPlayers = players.__iter__()
             continue
+
+        if joueurID == player.id:
+            print(f'Congratulations to {player.name} ! You won the game !!!')
+            break
+        joueurID = player.id
 
         write(historyDisplay, player.historyCount, 1, f"{tour(player.name)}")
 
         while True:
             refreshElement(actionsDisplay)
+            if player.bankruptcy:
+                break
 
             if player.countTurn == 3:
                 player.transaction(-50)
@@ -136,10 +148,10 @@ def main(std) -> int:
                     player.goToJail()
                     pass
             
-            # Mortgage
+            # Mortgage 
             if action == 1:
-                indexes = np.where((player.own[:, :, 0] == 1) & (player.own[:, :, 1] == 0))
-                id = [model[i][y] for i, y in zip(*indexes)]
+
+                id = player.getIdOfMortgageable()
                 loopWrite(choiceDisplay, 1, 1, [cases[i]['name'] for i in id])
                 x = ask(int, lambda x: x in range(1, len(id)+1))
                 case = cases[id[x-1]]
@@ -147,25 +159,40 @@ def main(std) -> int:
                 write(historyDisplay, player.historyCount, 1, f"{mortgageSentence} : {case['name']}")
                 write(historyDisplay, player.historyCount, 1, f"{win} {case['mortgagePrice']} €")
 
-            # Unmortgage
+            # Unmortage
             if action == 2:
-                indexes = np.where((player.own[:, :, 0] == 1) & (player.own[:, :, 1] == 1))
-                id = [model[i][y] for i, y in zip(*indexes)]
+
+                id = player.getIdOfUnmortgageable()
                 loopWrite(choiceDisplay, 1, 1, [cases[i]['name'] for i in id])
                 x = ask(int, lambda x: x in range(1, len(id)+1))
-                refreshElement(choiceDisplay)
                 case = cases[id[x-1]]
-                player.unMortgage(case)
+                player.unmortgage(case)
                 write(historyDisplay, player.historyCount, 1, f"{unMortgageSentence} : {case['name']}")
                 write(historyDisplay, player.historyCount, 1, f"{lost} {case['mortgagePrice']} €")
-            
+
             # Build
             if action == 3:
-                pass
+                id = player.getIdOfBuildable()
+                loopWrite(choiceDisplay, 1, 1, [cases[i]['name'] for i in id])
+                x = ask(int, lambda x: x in range(1, len(id)+1))
+                case = cases[id[x-1]]
+                player.build(case)
+                case['built'] += 1
+                state = "1 hotel" if case['built'] == 5 else f"{case['built']} maison{'s' if case['built'] > 1 else ''}"
+                write(historyDisplay, player.historyCount, 1, f"{case['name']} a {state}")
+                write(historyDisplay, player.historyCount, 1, f"{lost} {case['housePrice']} €")
 
             # Sell
             if action == 4:
-                pass
+                id = player.getIdOfBuildable()
+                loopWrite(choiceDisplay, 1, 1, [cases[i]['name'] for i in id])
+                x = ask(int, lambda x: x in range(1, len(id)+1))
+                case = cases[id[x-1]]
+                player.sell(case)
+                case['built'] -= 1
+                state = f"{case['built']} maison{'s' if case['built'] > 1 else ''}"
+                write(historyDisplay, player.historyCount, 1, f"{case['name']} a {state}")
+                write(historyDisplay, player.historyCount, 1, f"{win} {case['housePrice']/2} €")
 
             # End of Turn
             if action == 5:
@@ -181,6 +208,17 @@ def main(std) -> int:
             if action == 7:
                 player.free -= 1
                 player.inJail = False
+            
+            if player.money < 0:
+                overdrawn = abs(player.money)
+                heritage = 0
+                for i in range(len(model)):
+                    id = np.where((player.own[i, :len(model[i]), 0] == 1) & (player.own[i, :len(model[i]), 1] == 0))[0]
+                    for y in id:
+                        case = cases[model[i][y]]
+                        heritage += case['mortgagePrice'] + case['housePrice']/2*case['built']
+                if overdrawn > heritage:
+                    player.bankruptcy = True
 
     return 0
 

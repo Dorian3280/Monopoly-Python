@@ -25,6 +25,7 @@ class Player:
         self.countTurn = 0
         self.__historyCount = 1
         self.free = 0
+        self.bankruptcy = False
         self.displayPlayer()
     
     def getFreeCard(self):
@@ -73,15 +74,17 @@ class Player:
     def transaction(self, amount):
         self.money = self.money + amount
 
-    def hasFamily(self):
-        return any(
-            all(self.own[z, :len(i), 0])
-            and all(self.own[z, :len(i), 1] == 0)
-            and all(self.own[z, :len(i), 1] == 0)
-            and all(self.own[z, :len(i), 1] == 5)
-            for i, z in zip(model, range(10))
-        )
+    def isFamily(self, case):
+        idFamily = model.index(case['membership'])
+        return bool(np.where((np.count_nonzero(self.own[idFamily, :len(model[idFamily]), 0] == 1) == len(model[idFamily])) & (self.own[idFamily, :len(model[idFamily]), 1] == 0))[0].size)
+
+    def isBuilt(self, case):
+        return self.own[
+            model.index(case['membership']), case["membership"].index(case["id"]), 2
+        ]
+
     def move(self, nbr, teleportation, backward=False, jail=False):
+
         
         if teleportation == False:
             self.location = self.location + nbr
@@ -96,17 +99,6 @@ class Player:
             elif self.location > nbr and not backward:
                 self.transaction(200)
             self.location = nbr
-
-    def isFamily(self, case):
-        idFamily = model.index(case['membership'])
-        return all(self.own[idFamily, : len(model[idFamily]), 0]) and all(
-            self.own[idFamily, : len(model[idFamily]), 1] == 0
-        )
-
-    def isBuilt(self, case):
-        return self.own[
-            model.index(case['membership']), case["membership"].index(case["id"]), 2
-        ]
 
     def getPrice(self, case):
         isFamily = self.isFamily(case)
@@ -129,7 +121,7 @@ class Player:
         self.turn = False
         self.inJail = True
         self.move(10, True, jail=True)
-        
+
     def endTurn(self):
         self.move = False
         self.__historyCount = 1
@@ -140,33 +132,69 @@ class Player:
         self.own[model.index(case['membership']), case['membership'].index(case['id']), 1] = 1
         self.transaction(case['mortgagePrice'])
 
-    def unMortgage(self, case):
+    def unmortgage(self, case):
         case['mortgaged'] = False
         self.own[model.index(case['membership']), case['membership'].index(case['id']), 1] = 0
         self.transaction(-case['mortgagePrice'])
+
+    def build(self, case):
+        self.own[model.index(case['membership']), case['membership'].index(case['id']), 1] += 1
+        self.transaction(-case['housePrice'])
+
+    def sell(self, case):
+        self.own[model.index(case['membership']), case['membership'].index(case['id']), 1] -= 1
+        self.transaction(case['housePrice']/2)
+
+    def getIdOfMortgageable(self):
+        indexes = np.where((self.own[:, :, 0] == 1) & (self.own[:, :, 1] == 0))
+        return [model[i][y] for i, y in zip(*indexes)]
+
+    def mortgageable(self):
+        return bool(np.where((self.own[:, :, 0] == 1) & (self.own[:, :, 1] == 0)))
+
+    def getIdOfUnmortgageable(self):
+        indexes = np.where((self.own[:, :, 0] == 1) & (self.own[:, :, 1] == 1))
+        return [model[i][y] for i, y in zip(*indexes)]
+
+    def unmortgageable(self):
+        return bool(np.where((self.own[:, :, 0] == 1) & (self.own[:, :, 1] == 1)))
+
+    def getIdOfBuildable(self):
+        res = []
+        for z in range(len(model)):
+            if z != 0 or z != 9:
+                indexes = np.where((np.count_nonzero(self.own[z, :len(model[z]), 0] == 1) == len(model[z])) & (self.own[z, :len(model[z]), 1] == 0) & (np.amin(self.own[z, :len(model[z]), 2]) >= self.own[z, :len(model[z]), 2]) & (self.own[z, :len(model[z]), 2] <= 5))[0]
+                for i in indexes:
+                    res.append(model[z][i]) 
+        return res
+    
+    def getIdOfSaleable(self):
+        res = []
+        for z in range(len(model)):
+            if z != 0 or z != 9:
+                indexes = np.where((self.own[z, :len(model[z]), 2] > 0) & (np.amax(self.own[z, :len(model[z]), 2]) <= self.own[z, :len(model[z]), 2]))[0]
+                for i in indexes:
+                    res.append(model[z][i]) 
+        return res
 
     def checkActions(self):
         # Roll dice
         if self.turn:
             yield 0
         # Mortgage
-        if np.any(self.own[:, :, 0]) and np.any(
-            self.own[~np.all(self.own == 0, axis=2)][:, 1] == 0
-        ):
+        if self.mortgageable():
             yield 1
         # Unmortgage
-        if np.any(self.own[:, :, 0]) and np.any(
-            self.own[~np.all(self.own == 0, axis=2)][:, 1]
-        ):
+        if self.unmortgageable():
             yield 2
         # Build
-        if self.hasFamily():
+        if bool(self.getIdOfBuildable()):
             yield 3
         # Sell
-        if np.any(self.own[:, :, 2]):
+        if bool(self.getIdOfSaleable()):
             yield 4
         # End turn
-        if not self.turn:
+        if not self.turn or self.money < 0:
             yield 5
         # Quit
         if True:
@@ -174,5 +202,9 @@ class Player:
         if self.free:
             yield 7
 
-    def countConstruction(self):
-        return self.own[self.own[:, :, 2] < 5][:, 2].sum(), np.count_nonzero(self.own[:, :, 2] == 5)
+    def getPriceOfAllBuildingsForTHEFUCKING_Card(self):
+        return self.own[self.own[:, :, 2] < 5][:, 2].sum() * 25 + np.count_nonzero(self.own[:, :, 2] == 5) * 100
+
+    def getPriceOfAllBuildingsForTHEWORSTFUCKING_Card(self):
+        return self.own[self.own[:, :, 2] < 5][:, 2].sum() * 40 + np.count_nonzero(self.own[:, :, 2] == 5) * 115
+    # Sorry.... I has to
