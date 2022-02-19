@@ -7,7 +7,6 @@ from sentences import *
 from constants import COLORS
 
 stdscr = curses.initscr()
-resolution = curses.LINES, curses.COLS
 
 class Player:
     def __init__(self, id, name) -> None:
@@ -20,7 +19,7 @@ class Player:
         self.countDouble = 0
         self.dices = None
         self.turn = True
-        self.extraMove = False
+        self.forced = False
         self.inJail = False
         self.countTurn = 0
         self.__historyCount = 1
@@ -30,8 +29,7 @@ class Player:
     
     def getFreeCard(self):
         self.free += 1
-    def move(self, x):
-        self.move = x
+        
     @property
     def money(self):
         return self.__money
@@ -83,22 +81,19 @@ class Player:
             model.index(case['membership']), case["membership"].index(case["id"]), 2
         ]
 
-    def move(self, nbr, teleportation, backward=False, jail=False):
+    def moveByDice(self, nbr):
+        self.location = self.location + nbr
+        if self.location > 40:
+            self.transaction(200)
+            self.location -= 40
+    
+    def moveByCard(self, where, backward=False, moveBackward=False):
+        self.forced = True
 
-        
-        if teleportation == False:
-            self.location = self.location + nbr
-            if self.location > 40:
-                self.transaction(200)
-                self.location -= 40
-            elif self.location < 0:
-                self.location = 40 + self.location
-        else:
-            if jail:
-                self.inJail = True
-            elif self.location > nbr and not backward:
-                self.transaction(200)
-            self.location = nbr
+        if self.location > where and not backward and not moveBackward:
+            self.transaction(200)
+
+        self.location = where if not moveBackward else self.location + where
 
     def getPrice(self, case):
         isFamily = self.isFamily(case)
@@ -120,7 +115,7 @@ class Player:
     def goToJail(self):
         self.turn = False
         self.inJail = True
-        self.move(10, True, jail=True)
+        self.move(10, forced=True, jail=True)
 
     def endTurn(self):
         self.move = False
@@ -149,15 +144,15 @@ class Player:
         indexes = np.where((self.own[:, :, 0] == 1) & (self.own[:, :, 1] == 0))
         return [model[i][y] for i, y in zip(*indexes)]
 
-    def mortgageable(self):
-        return bool(np.where((self.own[:, :, 0] == 1) & (self.own[:, :, 1] == 0)))
-
     def getIdOfUnmortgageable(self):
         indexes = np.where((self.own[:, :, 0] == 1) & (self.own[:, :, 1] == 1))
         return [model[i][y] for i, y in zip(*indexes)]
 
+    def mortgageable(self):
+        return bool(np.where((self.own[:, :, 0] == 1) & (self.own[:, :, 1] == 0))[0])
+
     def unmortgageable(self):
-        return bool(np.where((self.own[:, :, 0] == 1) & (self.own[:, :, 1] == 1)))
+        return bool(np.where((self.own[:, :, 0] == 1) & (self.own[:, :, 1] == 1))[0])
 
     def getIdOfBuildable(self):
         res = []

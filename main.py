@@ -1,11 +1,10 @@
 import curses
-import time
 from curses import wrapper
 
 import numpy as np
 import random
 
-from classes import *
+from Players import Player
 from functions import *
 from sentences import *
 from constants import *
@@ -28,7 +27,7 @@ def main(std) -> int:
     std.clear()
     std.refresh()
 
-    actionsDisplay, historyDisplay, textDisplay, choiceDisplay = display()
+    actionsDisplay, historyDisplay, choiceDisplay, textDisplay = displayer()
 
     players = [Player(i, namePlayer(i)) for i in range(numberOfPlayers)]
     iterPlayers = players.__iter__()
@@ -56,6 +55,7 @@ def main(std) -> int:
         write(historyDisplay, player.historyCount, 1, f"{tour(player.name)}")
 
         while True:
+    
             refreshElement(actionsDisplay)
             if player.bankruptcy:
                 break
@@ -65,7 +65,7 @@ def main(std) -> int:
                 player.inJail = False
                 player.countTurn = 0
 
-            if player.extraMove is False:    
+            if not player.forced:    
                 arrayActions = []
                 for i in player.checkActions():
                     arrayActions.append(i)
@@ -73,11 +73,12 @@ def main(std) -> int:
                 action = ask(int, lambda x: x in arrayActions)
 
             # Roll dice
-            if action == 0 or player.extraMove is not False:
-                if player.extraMove is False:
+            if action == 0 or player.forced:
+                if not player.forced:
                     player.dices = random.randint(1, 7, size=2)
                     # total = np.sum(player.dices)
-                    total = 6
+                    # print(total, end='-')
+                    total = 7
                     if np.max(player.dices) == np.min(player.dices):
                         player.countDouble += 1
                         if player.countDouble == 3:
@@ -88,29 +89,29 @@ def main(std) -> int:
                     else:
                         player.turn = False
                     write(historyDisplay, player.historyCount, 1, f"{diceSentence} {total} ({player.dices[0]}, {player.dices[1]})")
+
                     if player.countDouble == 3:
-                        # Go to Jail
-                        pass
+                        player.goToJail()
 
-                # Movement
-                if player.inJail and not player.double:
+                    # Movement
+                    if player.inJail:
 
-                    refreshElement(actionsDisplay)
-                    loopWrite(actionsDisplay, 1, 1, [wait, getFree])
-                    x = ask(int, lambda x: x in [1, 2])
+                        refreshElement(actionsDisplay)
+                        loopWrite(actionsDisplay, 1, 1, [wait, getFree])
+                        x = ask(int, lambda x: x in [1, 2])
 
-                    if x == 2:
-                        player.transaction(-50)
-                        player.inJail = False
-                    else:
-                        player.countTurn += 1
+                        if x == 2:
+                            player.transaction(-50)
+                            write(historyDisplay, player.historyCount, 1, f"{lost} 50 €")
+                            player.inJail = False
+                        else:
+                            player.countTurn += 1
 
-                    continue
+                        continue
 
-                player.move(total, player.extraMove)
-
+                    player.moveByDice(total)
                 case = cases[player.location]
-
+                
                 if case['type'] == 'property' or case['type'] == 'station' or case['type'] == 'company':
                     if case['mortgaged']:
                         continue
@@ -126,29 +127,35 @@ def main(std) -> int:
                         x = ask(int, lambda x: x in [1, 2])
 
                         if x == 1:
+                            
                             player.own[model.index(case['membership']), case['membership'].index(case['id']), 0] = 1
                             cases[case['id']]['owned'] = player.id
                             player.transaction(-case['price'])
                             write(historyDisplay, player.historyCount, 1, f"{buySentence} {case['name']}")
+                            write(historyDisplay, player.historyCount, 1, f"{lost} {case['price']} €")
 
-                elif case['type'] == 'tax':
+                if case['type'] == 'tax':
                     player.transaction(-case['price'])
                     write(historyDisplay, player.historyCount, 1, f"{lost} {case['price']} €")
                 
-                elif case['type'] == 'chance' or case['type'] == 'communityChest':
+                if case['type'] == 'goToJail':
+                    player.goToJail()
+                
+
+                if case['type'] == 'chance' or case['type'] == 'communityChest' or player.forced:
+                    if player.forced:
+                        player.forced = False
+                        continue
                     refreshElement(textDisplay)
                     active = chanceCards if case['type'] == 'chance' else communityChestCards
                     card = active[0]
                     card['cast'](player)
                     active.append(active.pop(0))
                     write(historyDisplay, player.historyCount, 1, card['historyText'])
-                    loopWrite(textDisplay, 1, 1, [case['name'], card['text']])
-                
-                elif case['type'] == 'goToJail':
-                    player.goToJail()
-                    pass
+                    write(textDisplay, 1, 1, case['name'])
+                    write(textDisplay, 2, 1, card['text'])
             
-            # Mortgage 
+            # Mortgage
             if action == 1:
 
                 id = player.getIdOfMortgageable()

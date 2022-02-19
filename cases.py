@@ -22,6 +22,7 @@ cases = [
         "housePrice": 50,
         "membership": [1, 3],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -47,6 +48,7 @@ cases = [
         "housePrice": 50,
         "membership": [1, 3],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -68,6 +70,7 @@ cases = [
         "price": 200,
         "membership": [5, 15, 25, 35],
         "owned": False,
+        "mortgaged": False,
     },
     {
         "id": 6,
@@ -85,6 +88,7 @@ cases = [
         "housePrice": 50,
         "membership": [6, 7, 9],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -110,6 +114,7 @@ cases = [
         "housePrice": 50,
         "membership": [6, 7, 9],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -128,6 +133,7 @@ cases = [
         "housePrice": 50,
         "membership": [6, 7, 9],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -153,6 +159,7 @@ cases = [
         "housePrice": 100,
         "membership": [11, 12, 14],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -166,6 +173,7 @@ cases = [
         "price": 150,
         "membership": [12, 28],
         "owned": False,
+        "mortgaged": False,
     },
     {
         "id": 13,
@@ -183,6 +191,7 @@ cases = [
         "housePrice": 100,
         "membership": [11, 12, 14],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -199,8 +208,9 @@ cases = [
         "mortgagePrice": 80,
         "price": 160,
         "housePrice": 100,
-        "membership": [11, 12, 14],
+        "membership": [11, 13, 14],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -214,6 +224,7 @@ cases = [
         "price": 200,
         "membership": [5, 15, 25, 35],
         "owned": False,
+        "mortgaged": False,
     },
     {
         "id": 16,
@@ -231,6 +242,7 @@ cases = [
         "housePrice": 100,
         "membership": [16, 18, 19],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -256,6 +268,7 @@ cases = [
         "housePrice": 100,
         "membership": [16, 18, 19],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -273,6 +286,7 @@ cases = [
         "price": 200,
         "membership": [16, 18, 19],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -298,6 +312,7 @@ cases = [
         "housePrice": 150,
         "membership": [21, 23, 24],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {"id": 22, "idColor": 9, "name": "Chance", "imgName": "chance", "type": "chance",},
@@ -317,6 +332,7 @@ cases = [
         "housePrice": 150,
         "membership": [21, 23, 24],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -335,6 +351,7 @@ cases = [
         "housePrice": 150,
         "membership": [21, 23, 24],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -348,6 +365,7 @@ cases = [
         "price": 200,
         "membership": [5, 15, 25, 35],
         "owned": False,
+        "mortgaged": False,
     },
     {
         "id": 26,
@@ -365,6 +383,7 @@ cases = [
         "housePrice": 150,
         "membership": [26, 27, 29],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -383,6 +402,7 @@ cases = [
         "housePrice": 150,
         "membership": [26, 27, 29],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -396,6 +416,7 @@ cases = [
         "price": 150,
         "membership": [12, 28],
         "owned": False,
+        "mortgaged": False,
     },
     {
         "id": 29,
@@ -413,6 +434,7 @@ cases = [
         "housePrice": 150,
         "membership": [26, 27, 29],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -438,6 +460,7 @@ cases = [
         "housePrice": 200,
         "membership": [31, 32, 34],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -456,6 +479,7 @@ cases = [
         "housePrice": 200,
         "membership": [31, 32, 34],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -481,6 +505,7 @@ cases = [
         "housePrice": 200,
         "membership": [31, 32, 34],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -494,6 +519,7 @@ cases = [
         "price": 200,
         "membership": [5, 15, 25, 35],
         "owned": False,
+        "mortgaged": False,
     },
     {
         "id": 36,
@@ -517,6 +543,7 @@ cases = [
         "housePrice": 200,
         "membership": [37, 39],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
     {
@@ -543,6 +570,7 @@ cases = [
         "housePrice": 200,
         "membership": [37, 39],
         "owned": False,
+        "mortgaged": False,
         "built": 0,
     },
 ]

@@ -19,13 +19,15 @@ def ask(typeof, test):
             return res
         except ValueError and Exception:
             pass
-def display():
+
+def displayer():
     write(std, 0, 4, TITLES['action'])
     write(std, 0, 57, TITLES['history'])
     write(std, 0, 103, TITLES['choice'])
     write(std, 0, 157, TITLES['player'])
     write(std, 14, 85, TITLES['text'])
-    return displayElement(12, 30, 1, 0), displayElement(12, 60, 1, 33), displayElement(4, 190, 15, 0), displayElement(12, 40, 1, 95)
+    #      actionsDisplay,               historyDisplay,                choiceDisplay,                 textDisplay  
+    return displayElement(12, 35, 1, 0), displayElement(12, 60, 1, 38), displayElement(12, 40, 1, 100), displayElement(4, 190, 15, 0)
 
 def displayElement(h, w, y, x):
     element = curses.newwin(h, w, y, x)
