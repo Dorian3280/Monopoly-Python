@@ -1,3 +1,4 @@
+congratulations = lambda x: f"Felicitation à {x} ! Vous avez gagné la partie !!!"
 namePlayer = lambda x: f"Joueur {x}"
 tour = lambda x: f"Au tour du {x}"
 welcome = "Bienvenue dans le jeu MONOPOLY !"
