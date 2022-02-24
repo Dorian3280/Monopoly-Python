@@ -20,7 +20,7 @@ def main(std) -> int:
     # )
     # std.refresh()
     # numberOfPlayers = ask(int, lambda x: 2 <= x <= 4)
-    numberOfPlayers = 2
+    numberOfPlayers = 1
     nbrTour = 0
 
     players = [Player(i, namePlayer(i)) for i in range(numberOfPlayers)]
@@ -48,65 +48,38 @@ def main(std) -> int:
             print(congratulations(player.name))
             break
 
-        joueurID = player.id
+        # joueurID = player.id
 
         while True:
 
             if player.bankruptcy:
                 break
 
-            if player.inJail and not player.forcedToJail:
-                player.countTurnInJail += 1
-
-            if player.tryDouble:
-                player.dices = player.rollDice()
-            print(player.turn)
-            action = player.checkActions()
-
+            if not player.action:
+                action = player.checkActions()
+            
             # Roll dice
             if action == 0:
 
-                player.dices = player.rollDice()
-                
-                player.moveByDice(player.dices[0])
+                if not player.moveOutOfJail:
+                    player.rollDice()
+                else:
+                    player.moveOutOfJail = True
+                    
+                player.moveByDice(player.totalDices)
 
                 while True:
 
                     player.loopWhile = False
-                    case = cases[player.location]
+                    state, ownerID = player.landOnProperty()
 
-                    if (
-                        case["type"] == "property"
-                        or case["type"] == "station"
-                        or case["type"] == "company"
-                    ):
-                        if case["mortgaged"]:
-                            continue
-                        elif case["owned"] is not False:
-                            owner = players[case["owned"]]
-                            amount = owner.getPrice(case)
-                            player.payTo(owner, amount)
-                        else:
-
-                            x = player.choice([1, 2], [buy, notBuy])
-
-                            # Buy
-                            if x == 1:
-                                player.buy(case)
-
-                    if case["type"] == "tax":
-                        player.transaction(-case["price"])
-
-                    if case["type"] == "goToJail":
-                        player.moveToJail()
-
-                    if case["type"] == "chance" or case["type"] == "communityChest":
-
-                        active = CARDS[case["type"]]
-                        card = active[0]
-                        active.append(active.pop(0))
-
-                        player.castCard(card, case["name"])
+                    if state == 'morgaged':
+                        continue
+                    
+                    elif state == 'owned':
+                        owner = players[ownerID]
+                        amount = owner.getPrice(case)
+                        player.payTo(owner, amount)
 
                     if not player.loopWhile:
                         break
@@ -118,6 +91,8 @@ def main(std) -> int:
                 x = player.choice(
                     [i for i in range(1, len(id) + 1)], [cases[i]["name"] for i in id]
                 )
+                if not x:
+                    continue
                 case = cases[id[x - 1]]
                 player.mortgage(case)
 
@@ -128,6 +103,8 @@ def main(std) -> int:
                 x = player.choice(
                     [i for i in range(1, len(id) + 1)], [cases[i]["name"] for i in id]
                 )
+                if not x:
+                    continue
                 case = cases[id[x - 1]]
                 player.unmortgage(case)
 
@@ -138,6 +115,8 @@ def main(std) -> int:
                 x = player.choice(
                     [i for i in range(1, len(id) + 1)], [cases[i]["name"] for i in id]
                 )
+                if not x:
+                    continue
                 case = cases[id[x - 1]]
                 player.build(case)
 
@@ -148,6 +127,8 @@ def main(std) -> int:
                 x = player.choice(
                     [i for i in range(1, len(id) + 1)], [cases[i]["name"] for i in id]
                 )
+                if not x:
+                    continue
                 case = cases[id[x - 1]]
                 player.sell(case)
 
@@ -158,22 +139,31 @@ def main(std) -> int:
 
             # Try Double
             if action == 6:
+                player.rollDice()
+
+                player.countTurnInJail += 1
+                
+                if player.double:
+                    player.moveOutOfJail()
+                    player.turn = False
+                    player.action = 0
+            
+                elif player.countTurnInJail == 3:
+                    player.transaction(-50)
+                    player.moveOutOfJail()
+                    player.action = 0
+
                 player.tryDouble = True
 
-            # Wait in Jail
-            if action == 7:
-                player.endTurn()
-                break
-
             # Pay Fine
-            if action == 8:
-                player.transaction(-50)
+            if action == 7:
                 player.outOfJail()
+                player.transaction(-50)
 
             # Use Get out of jail Free
-            if action == 9:
-                player.freeJailCard -= 1
+            if action == 8:
                 player.outOfJail()
+                player.freeJailCard -= 1
 
             if player.money < 0:
                 overdrawn = abs(player.money)

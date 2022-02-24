@@ -19,16 +19,18 @@ class Player:
         self.__money = 1500
         self.__location = 0
         self.own = np.zeros((10, 4, 3), dtype=int)
+        self.action = False
         self.double = False
         self.tryDouble = False
         self.countDouble = 0
-        self.dices = None
+        self.totalDices = 0
         self.loopWhile = False
         self.actions = []
         self.turn = True
         self.response = 0
         self.inJail = False
         self.forcedToJail = False
+        self.moveOutOfJail = False
         self.countTurnInJail = 0
         self.__historyCount = 1
         self.freeJailCard = 0
@@ -39,7 +41,7 @@ class Player:
         displayer.write(historyDisplay, self.historyCount, 1, f"{tour(self.name)}")
 
     def __str__(self) -> str:
-        return f"id : {self.id}\nturn : {self.turn}\nforcedToJail : {self.forcedToJail}\ninJail : {self.inJail}\ndouble : {self.double}"
+        return f"id : {self.id}\nturn : {self.turn}\nforcedToJail : {self.forcedToJail}\ninJail : {self.inJail}\ndouble : {self.double}\nmoveOutOfJail : {self.moveOutOfJail}\ncountTurnInJail : {self.countTurnInJail}\ntryDouble : {self.tryDouble}"
 
     def getFreeJailCard(self):
         self.freeJailCard += 1
@@ -87,6 +89,8 @@ class Player:
                 y = std.getkey()
                 if y == 'q':
                     quit()
+                if y == 'c':
+                    return False
                 res = int(x + y)
                 if res not in nbr:
                     raise Exception
@@ -95,35 +99,26 @@ class Player:
                 pass
 
     def rollDice(self):
-        self.dices = np.random.randint(1, 7, size=2)
-        total = np.sum(self.dices)
-
-        if np.max(self.dices) == np.min(self.dices):
+        dices = np.random.randint(1, 7, size=2)
+        self.totalDices = np.sum(dices)
+        self.totalDices = 7
+        if dices[0] == dices[1]:
             self.countDouble += 1
             self.double = True
-
-            if self.inJail:
-                self.outOfJail()
-                self.turn = False
 
             if self.countDouble == 3:
                 self.moveToJail()
 
         else:
-            if self.countTurnInJail == 3:
-                self.transaction(-50)
-                self.outOfJail()
-                self.moveByDice(total)
+            self.double = False
             self.turn = False
 
         displayer.write(
             historyDisplay,
             self.historyCount,
             1,
-            f"{diceSentence} {total} ({self.dices[0]}, {self.dices[1]})",
+            f"{diceSentence} {self.totalDices} ({dices[0]}, {dices[1]})",
         )
-
-        return total, self.double
 
     def payTo(self, player, amount):
         self.money = self.money - amount
@@ -186,6 +181,10 @@ class Player:
         self.countTurnInJail = 0
         self.location = 10
 
+    def moveOutOfJail(self):
+        self.outOfJail()
+        self.moveByDice(self.totalDices)
+
     def getPrice(self, case):
         isFamily = self.isFamily(case)
         if case["type"] == "property":
@@ -203,13 +202,50 @@ class Player:
                 self.own[model.index(case["membership"]), :, 0]
             )
         else:
-            return 4 * np.sum(self.dices) if not isFamily else 10 * np.sum(self.dices)
+            return 4 * self.totalDices if not isFamily else 10 * self.totalDices
+
+    def landOnProperty(self):
+
+        case = cases[self.location]
+
+        if (
+            case["type"] == "property"
+            or case["type"] == "station"
+            or case["type"] == "company"
+        ):
+            if case["mortgaged"]:
+                return ('mortgaged', case["owned"])
+            elif case["owned"]:
+                return ('owned', case["owned"])
+            else:
+
+                x = self.choice([1, 2], [buy, notBuy])
+
+                # Buy
+                if x == 1:
+                    self.buy(case)
+
+        if case["type"] == "tax":
+            self.transaction(-case["price"])
+
+        if case["type"] == "goToJail":
+            self.moveToJail()
+
+        if case["type"] == "chance" or case["type"] == "communityChest":
+
+            active = CARDS[case["type"]]
+            card = active[0]
+            active.append(active.pop(0))
+            self.castCard(card, case["name"])
 
     def endTurn(self):
+        self.action = False
         self.__historyCount = 1
         self.countDouble = 0
         self.turn = True
         self.forcedToJail = False
+        self.moveOutOfJail = False
+        self.tryDouble = False
         self.actions = []
         displayer.refreshElements(actionsDisplay, historyDisplay, textDisplay)
 
@@ -331,7 +367,7 @@ class Player:
         self.actions = []
 
         # Roll dice
-        if self.turn and not self.inJail and not self.forcedToJail:
+        if self.turn and not self.inJail:
             self.actions.append(0)
         # Mortgage
         if self.mortgageable() and not self.forcedToJail:
@@ -346,20 +382,17 @@ class Player:
         if bool(self.getIdOfSaleable()) and not self.forcedToJail:
             self.actions.append(4)
         # End turn
-        if not self.turn or self.money < 0:
+        if (self.money > 0 and not self.turn and not (self.inJail and not self.tryDouble)) or self.forcedToJail:
             self.actions.append(5)
         # Try Double
-        if self.inJail and not self.forcedToJail:
+        if self.inJail and not self.forcedToJail and not self.tryDouble:
             self.actions.append(6)
-        # Wait in Jail
-        if self.inJail and not self.forcedToJail and self.countTurnInJail != 3:
-            self.actions.append(7)
         # Pay Fine
-        if self.inJail and not self.forcedToJail:
-            self.actions.append(8)
+        if self.inJail and not self.forcedToJail and not self.tryDouble:
+            self.actions.append(7)
         # Use Free Jail Card
         if self.inJail and self.freeJailCard and not self.forcedToJail:
-            self.actions.append(9)
+            self.actions.append(8)
 
         return self.choice(
             self.actions, [f"{ACTIONS[i]}" for i in self.actions]
