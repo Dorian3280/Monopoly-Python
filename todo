@@ -1,3 +1,1 @@
-Refactor colors
-Try to optimize displayer player by spliting things
-state bug with non builtable property
+colors : suppose to work but somehow doesn't work inside a newwin

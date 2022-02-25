@@ -2,6 +2,7 @@ import curses
 from curses import wrapper
 
 import numpy as np
+import random
 
 from Players import Player
 from sentences import *
@@ -19,13 +20,13 @@ def main(std) -> int:
     # )
     # std.refresh()
     # numberOfPlayers = ask(int, lambda x: 2 <= x <= 4)
-    numberOfPlayers = 1
+    numberOfPlayers = 2
     nbrTour = 0
 
     players = [Player(i, namePlayer(i)) for i in range(numberOfPlayers)]
     iterPlayers = players.__iter__()
-    # random.shuffle(CARDS['chance'])
-    # random.shuffle(CARDS['communityChest'])
+    random.shuffle(CARDS['chance'])
+    random.shuffle(CARDS['communityChest'])
 
     joueurID = -1
 

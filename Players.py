@@ -75,7 +75,10 @@ class Player:
 
     def choice(self, nbr, texts, multiple=False):
         displayer.refreshElement(actionsDisplay)
-        displayer.loopWrite(actionsDisplay, 1, 2, nbr, texts)
+
+        for i in range(len(texts)):
+            displayer.write(actionsDisplay, 1 + i, 2, f"{nbr[i]} : {texts[i]}")
+
         while True:
             curses.flushinp()
             try:
@@ -95,7 +98,7 @@ class Player:
     def rollDice(self):
         dices = np.random.randint(1, 7, size=2)
         self.totalDices = np.sum(dices)
-        self.totalDices = 12
+        self.totalDices = 8
         if dices[0] == dices[1]:
             self.countDouble += 1
             self.double = True
