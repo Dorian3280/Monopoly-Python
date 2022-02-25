@@ -16,7 +16,6 @@ def color_initialize():
     curses.init_pair(7, 2, 234)
     curses.init_pair(8, 27, 234)
     curses.init_pair(9, 244, 234)
-    curses.init_pair(9, 0, 234)
     return (
         curses.color_pair(1),
         curses.color_pair(2),
@@ -27,7 +26,6 @@ def color_initialize():
         curses.color_pair(7),
         curses.color_pair(8),
         curses.color_pair(9),
-        curses.color_pair(10),
     )
 
 
@@ -51,6 +49,7 @@ TITLES = {
     "history": "Historique",
     "player": "Informations des joueurs",
     "text": "Affichage du texte",
+    "gameInfo": "Informations de la partie",
 }
 
 CARDS = {

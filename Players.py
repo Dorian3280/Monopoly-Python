@@ -9,7 +9,7 @@ from Displayer import Displayer
 std = curses.initscr()
 
 displayer = Displayer()
-actionsDisplay, historyDisplay, textDisplay = displayer()
+actionsDisplay, historyDisplay, textDisplay, infoDisplay = displayer()
 
 
 class Player:
@@ -27,7 +27,6 @@ class Player:
         self.loopWhile = False
         self.actions = []
         self.turn = True
-        self.response = 0
         self.inJail = False
         self.forcedToJail = False
         self.moveOutOfJail = False
@@ -35,10 +34,13 @@ class Player:
         self.__historyCount = 1
         self.freeJailCard = 0
         self.bankruptcy = False
+        self.players = []
         displayer.player(self)
 
-    def __call__(self):
-        displayer.write(historyDisplay, self.historyCount, 1, f"{tour(self.name)}")
+    def __call__(self, players, nbrTour):
+        self.players = players
+        displayer.write(historyDisplay, self.historyCount, 1, f"{actualTurn(self.name)}")
+        displayer.write(infoDisplay, 1, 1, f"{turn} n°{nbrTour}")
 
     def __str__(self) -> str:
         return f"id : {self.id}\nturn : {self.turn}\nforcedToJail : {self.forcedToJail}\ninJail : {self.inJail}\ndouble : {self.double}\nmoveOutOfJail : {self.moveOutOfJail}\ncountTurnInJail : {self.countTurnInJail}\ntryDouble : {self.tryDouble}"
@@ -54,14 +56,6 @@ class Player:
     def money(self, x):
         self.__money = x
         displayer.player(self)
-
-    @property
-    def response(self):
-        return self.__money
-
-    @response.setter
-    def response(self, x):
-        displayer.refreshElement(actionsDisplay)
 
     @property
     def location(self):
@@ -81,7 +75,7 @@ class Player:
 
     def choice(self, nbr, texts, multiple=False):
         displayer.refreshElement(actionsDisplay)
-        displayer.loopWrite(actionsDisplay, 1, 1, nbr, texts)
+        displayer.loopWrite(actionsDisplay, 1, 2, nbr, texts)
         while True:
             curses.flushinp()
             try:
@@ -101,7 +95,7 @@ class Player:
     def rollDice(self):
         dices = np.random.randint(1, 7, size=2)
         self.totalDices = np.sum(dices)
-        self.totalDices = 7
+        self.totalDices = 12
         if dices[0] == dices[1]:
             self.countDouble += 1
             self.double = True
@@ -213,10 +207,10 @@ class Player:
             or case["type"] == "station"
             or case["type"] == "company"
         ):
-            if case["mortgaged"]:
-                return ('mortgaged', case["owned"])
-            elif case["owned"]:
-                return ('owned', case["owned"])
+            if case["owned"]:
+                owner = self.players[case['owned']]
+                amount = owner.getPrice(case)
+                self.payTo(owner, amount)
             else:
 
                 x = self.choice([1, 2], [buy, notBuy])

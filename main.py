@@ -2,7 +2,6 @@ import curses
 from curses import wrapper
 
 import numpy as np
-import random
 
 from Players import Player
 from sentences import *
@@ -35,7 +34,7 @@ def main(std) -> int:
 
         try:
             player = next(iterPlayers)
-            player()
+            player(players, nbrTour)
 
             if player.bankruptcy:
                 players.remove(player.id)
@@ -71,15 +70,7 @@ def main(std) -> int:
                 while True:
 
                     player.loopWhile = False
-                    state, ownerID = player.landOnProperty()
-
-                    if state == 'morgaged':
-                        continue
-                    
-                    elif state == 'owned':
-                        owner = players[ownerID]
-                        amount = owner.getPrice(case)
-                        player.payTo(owner, amount)
+                    player.landOnProperty()
 
                     if not player.loopWhile:
                         break
@@ -170,14 +161,14 @@ def main(std) -> int:
                 heritage = 0
                 for i in range(len(model)):
                     id = np.where(
-                        (player.own[i, : len(model[i]), 0] == 1)
-                        & (player.own[i, : len(model[i]), 1] == 0)
+                        (player.own[i, : len(model[i]), 0] == 1) # Mortgageable property
+                        & (player.own[i, : len(model[i]), 1] == 0) # Buildings
                     )[0]
                     for y in id:
                         case = cases[model[i][y]]
                         heritage += (
                             case["mortgagePrice"]
-                            + case["housePrice"] / 2 * case["built"] / 2
+                            + case["housePrice"] / 2 * case["built"]
                         )
                 if overdrawn > heritage:
                     player.bankruptcy = True
