@@ -98,7 +98,7 @@ class Player:
     def rollDice(self):
         dices = np.random.randint(1, 7, size=2)
         self.totalDices = np.sum(dices)
-        self.totalDices = 8
+        
         if dices[0] == dices[1]:
             self.countDouble += 1
             self.double = True
