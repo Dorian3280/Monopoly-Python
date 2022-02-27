@@ -25,8 +25,8 @@ def main(std) -> int:
 
     players = [Player(i, namePlayer(i)) for i in range(numberOfPlayers)]
     iterPlayers = players.__iter__()
-    random.shuffle(CARDS['chance'])
-    random.shuffle(CARDS['communityChest'])
+    random.shuffle(CARDS["chance"])
+    random.shuffle(CARDS["communityChest"])
 
     joueurID = -1
 
@@ -48,24 +48,28 @@ def main(std) -> int:
             print(congratulations(player.name))
             break
 
-        # joueurID = player.id
+        joueurID = player.id
 
         while True:
 
             if player.bankruptcy:
+                player.gameOver()
+                std.getch()
                 break
 
-            if not player.action:
+            action = 0
+
+            if player.moveOutOfJailBool is False:
                 action = player.checkActions()
-            
+            print(str(player))
             # Roll dice
             if action == 0:
 
-                if not player.moveOutOfJail:
+                if not player.moveOutOfJailBool:
                     player.rollDice()
                 else:
-                    player.moveOutOfJail = True
-                    
+                    player.moveOutOfJailBool = False
+
                 player.moveByDice(player.totalDices)
 
                 while True:
@@ -134,16 +138,14 @@ def main(std) -> int:
                 player.rollDice()
 
                 player.countTurnInJail += 1
-                
+
                 if player.double:
                     player.moveOutOfJail()
                     player.turn = False
-                    player.action = 0
-            
+
                 elif player.countTurnInJail == 3:
-                    player.transaction(-50)
                     player.moveOutOfJail()
-                    player.action = 0
+                    player.transaction(-50)
 
                 player.tryDouble = True
 
@@ -162,16 +164,29 @@ def main(std) -> int:
                 heritage = 0
                 for i in range(len(model)):
                     id = np.where(
-                        (player.own[i, : len(model[i]), 0] == 1) # Mortgageable property
-                        & (player.own[i, : len(model[i]), 1] == 0) # Buildings
+                        (
+                            player.own[i, : len(model[i]), 0] == 1
+                        )  # Mortgageable property
+                        & (player.own[i, : len(model[i]), 1] == 0)  # Buildings
                     )[0]
                     for y in id:
                         case = cases[model[i][y]]
                         heritage += (
                             case["mortgagePrice"]
-                            + case["housePrice"] / 2 * case["built"]
+                            + case["housePrice"] // 2 * case["built"]
                         )
                 if overdrawn > heritage:
+                    if player.lastDebt:
+                        players[player.lastDebt].own = (
+                            players[player.lastDebt].own + player.own
+                        )
+                        players[player.lastDebt].money = (
+                            players[player.lastDebt].money + player.money
+                        )
+                        players[player.lastDebt].freeJailCard = (
+                            players[player.lastDebt].freeJailCard + player.freeJailCard
+                        )
+
                     player.bankruptcy = True
 
     return 0

@@ -16,7 +16,7 @@ TITLES = {
     "history": "Historique",
     "player": "Informations des joueurs",
     "text": "Affichage du texte",
-    "gameInfo": "Informations de la partie",
+    "info": "Informations de la partie",
 }
 
 CARDS = {
@@ -29,9 +29,7 @@ CARDS = {
             "text": "Recevez votre revenu annuel 100€.",
             "cast": lambda x: x.transaction(100),
         },
-        {
-            "text": "Payez la note du Medecin 50€.",
-            "cast": lambda x: x.transaction(-50)},
+        {"text": "Payez la note du Medecin 50€.", "cast": lambda x: x.transaction(-50)},
         {
             "text": "Vous avez gagne le deuxieme Prix de Beaute. Recevez 100€.",
             "cast": lambda x: x.transaction(100),
@@ -44,19 +42,13 @@ CARDS = {
             "text": "Vous etes libere de prison. Cette carte peut être conservee jusqu'a ce qu'elle soit utilisee ou vendue.",
             "cast": lambda x: x.getFreeJailCard(),
         },
-        {
-            "text": "Placez vous sur le case Depart.",
-            "cast": lambda x: x.moveByCard(0)},
-        {
-            "text": "Vous heritez 100€.",
-            "cast": lambda x: x.transaction(100)},
+        {"text": "Placez vous sur le case Depart.", "cast": lambda x: x.moveByCard(0)},
+        {"text": "Vous heritez 100€.", "cast": lambda x: x.transaction(100)},
         {
             "text": "Recevez votre interêt sur l'emprunt a 7%. 25€.",
             "cast": lambda x: x.transaction(25),
         },
-        {
-            "text": "Payer a l'Hôpital 100€.",
-            "cast": lambda x: x.transaction(-100)},
+        {"text": "Payer a l'Hôpital 100€.", "cast": lambda x: x.transaction(-100)},
         {
             "text": "Payer votre Police d'Assurance s'elevant a 50€.",
             "cast": lambda x: x.transaction(-50),
@@ -123,9 +115,7 @@ CARDS = {
             "text": "Avancez au Boulevard de la Villette. Si vous passez par la case Depart recevez 200€.",
             "cast": lambda x: x.moveByCard(11),
         },
-        {
-            "text": "Amende pour ivresse : 20€.",
-            "cast": lambda x: x.transaction(-20)},
+        {"text": "Amende pour ivresse : 20€.", "cast": lambda x: x.transaction(-20)},
         {
             "text": "Vous êtes libere de prison. Cette carte peut être conservee jusqu'a ce qu'elle soit utilisee ou vendue.",
             "cast": lambda x: x.getFreeJailCard(),
@@ -142,9 +132,7 @@ CARDS = {
             "text": "Allez a la gare de Lyon. Si vous passez par la case Depart recevez 200€.",
             "cast": lambda x: x.moveByCard(15),
         },
-        {
-            "text": "Avancez jusqu'a la case Depart.",
-            "cast": lambda x: x.moveByCard(0)},
+        {"text": "Avancez jusqu'a la case Depart.", "cast": lambda x: x.moveByCard(0)},
         {
             "text": "Votre immeuble et votre prêt vous rapportent. Vous devez touchez 150€.",
             "cast": lambda x: x.transaction(150),

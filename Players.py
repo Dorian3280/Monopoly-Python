@@ -9,7 +9,13 @@ from Displayer import Displayer
 std = curses.initscr()
 
 displayer = Displayer()
-actionsDisplay, historyDisplay, textDisplay, infoDisplay = displayer()
+(
+    actionsDisplay,
+    historyDisplay,
+    transactionDisplay,
+    infoDisplay,
+    textDisplay,
+) = displayer()
 
 
 class Player:
@@ -19,7 +25,6 @@ class Player:
         self.__money = 1500
         self.__location = 0
         self.own = np.zeros((10, 4, 3), dtype=int)
-        self.action = False
         self.double = False
         self.tryDouble = False
         self.countDouble = 0
@@ -29,21 +34,21 @@ class Player:
         self.turn = True
         self.inJail = False
         self.forcedToJail = False
-        self.moveOutOfJail = False
+        self.moveOutOfJailBool = False
         self.countTurnInJail = 0
-        self.__historyCount = 1
         self.freeJailCard = 0
+        self.lastDebt = False
         self.bankruptcy = False
         self.players = []
         displayer.player(self)
 
     def __call__(self, players, nbrTour):
         self.players = players
-        displayer.write(historyDisplay, self.historyCount, 1, f"{actualTurn(self.name)}")
-        displayer.write(infoDisplay, 1, 1, f"{turn} n°{nbrTour}")
+        displayer.write(historyDisplay, text=f"{currentTurn(self.name)}")
+        displayer.write(infoDisplay, text=f"{turn} n°{nbrTour}")
 
     def __str__(self) -> str:
-        return f"id : {self.id}\nturn : {self.turn}\nforcedToJail : {self.forcedToJail}\ninJail : {self.inJail}\ndouble : {self.double}\nmoveOutOfJail : {self.moveOutOfJail}\ncountTurnInJail : {self.countTurnInJail}\ntryDouble : {self.tryDouble}"
+        return f"id : {self.id}\nturn : {self.turn}\nforcedToJail : {self.forcedToJail}\ninJail : {self.inJail}\ndouble : {self.double}\nmoveOutOfJailBool : {self.moveOutOfJailBool}\ncountTurnInJail : {self.countTurnInJail}\ntryDouble : {self.tryDouble}"
 
     def getFreeJailCard(self):
         self.freeJailCard += 1
@@ -67,26 +72,20 @@ class Player:
         if x < 40:
             displayer.player(self)
 
-    @property
-    def historyCount(self):
-        temp = self.__historyCount
-        self.__historyCount += 1
-        return temp
-
     def choice(self, nbr, texts, multiple=False):
         displayer.refreshElement(actionsDisplay)
 
         for i in range(len(texts)):
-            displayer.write(actionsDisplay, 1 + i, 2, f"{nbr[i]} : {texts[i]}")
+            displayer.write(actionsDisplay, y=1 + i, text=f"{nbr[i]} : {texts[i]}")
 
         while True:
             curses.flushinp()
             try:
                 x = std.getkey() if multiple else "0"
                 y = std.getkey()
-                if y == 'q':
+                if y == "q":
                     quit()
-                if y == 'c':
+                if y == "c":
                     return False
                 res = int(x + y)
                 if res not in nbr:
@@ -98,7 +97,7 @@ class Player:
     def rollDice(self):
         dices = np.random.randint(1, 7, size=2)
         self.totalDices = np.sum(dices)
-        
+
         if dices[0] == dices[1]:
             self.countDouble += 1
             self.double = True
@@ -112,27 +111,22 @@ class Player:
 
         displayer.write(
             historyDisplay,
-            self.historyCount,
-            1,
-            f"{diceSentence} {self.totalDices} ({dices[0]}, {dices[1]})",
+            text=f"{diceSentence} {self.totalDices} ({dices[0]}, {dices[1]})",
         )
 
     def payTo(self, player, amount):
+        self.lastDebt = player.id
         self.money = self.money - amount
         player.money = player.money + amount
         displayer.write(
             historyDisplay,
-            self.historyCount,
-            1,
-            f"{namePlayer(self.id)} -> {namePlayer(player.id)} : {amount}",
+            text=f"{namePlayer(self.id)} -> {namePlayer(player.id)} : {amount} €",
         )
 
     def transaction(self, amount):
+        self.lastDebt = False
         displayer.write(
-            historyDisplay,
-            self.historyCount,
-            1,
-            f"{win if amount > 0 else lost} {abs(amount)} €",
+            transactionDisplay, text=f"{amount} €",
         )
         self.money = self.money + amount
 
@@ -172,15 +166,17 @@ class Player:
         self.inJail = True
         self.turn = False
         self.location = 10
+        displayer.write(historyDisplay, text=f"{inJail}")
 
     def outOfJail(self):
         self.inJail = False
         self.countTurnInJail = 0
         self.location = 10
+        displayer.write(historyDisplay, text=f"{free}")
 
     def moveOutOfJail(self):
         self.outOfJail()
-        self.moveByDice(self.totalDices)
+        self.moveOutOfJailBool = True
 
     def getPrice(self, case):
         isFamily = self.isFamily(case)
@@ -202,7 +198,7 @@ class Player:
             return 4 * self.totalDices if not isFamily else 10 * self.totalDices
 
     def landOnProperty(self):
-
+        print(self.location)
         case = cases[self.location]
 
         if (
@@ -211,7 +207,7 @@ class Player:
             or case["type"] == "company"
         ):
             if case["owned"]:
-                owner = self.players[case['owned']]
+                owner = self.players[case["owned"]]
                 amount = owner.getPrice(case)
                 self.payTo(owner, amount)
             else:
@@ -230,36 +226,35 @@ class Player:
 
         if case["type"] == "chance" or case["type"] == "communityChest":
 
+            displayer.write(historyDisplay, text=drawCards(case["name"]))
             active = CARDS[case["type"]]
             card = active[0]
             active.append(active.pop(0))
             self.castCard(card, case["name"])
 
     def endTurn(self):
-        self.action = False
-        self.__historyCount = 1
         self.countDouble = 0
         self.turn = True
         self.forcedToJail = False
-        self.moveOutOfJail = False
         self.tryDouble = False
         self.actions = []
-        displayer.refreshElements(actionsDisplay, historyDisplay, textDisplay)
+        displayer.refreshElements(
+            actionsDisplay, historyDisplay, transactionDisplay, textDisplay
+        )
+        displayer.refreshHistoryCount()
 
     def castCard(self, card, type):
         card["cast"](self)
         displayer.refreshElement(textDisplay)
-        displayer.write(textDisplay, 1, 1, type)
-        displayer.write(textDisplay, 2, 1, card["text"])
+        displayer.write(textDisplay, y=1, text=type)
+        displayer.write(textDisplay, y=2, text=card["text"])
 
     def buy(self, case):
         self.own[
             model.index(case["membership"]), case["membership"].index(case["id"]), 0
         ] = 1
         cases[case["id"]]["owned"] = self.id
-        displayer.write(
-            historyDisplay, self.historyCount, 1, f"{buySentence} {case['name']}"
-        )
+        displayer.write(historyDisplay, text=f"{buySentence} {case['name']}")
         self.transaction(-case["price"])
 
     def mortgage(self, case):
@@ -267,9 +262,7 @@ class Player:
         self.own[
             model.index(case["membership"]), case["membership"].index(case["id"]), 1
         ] = 1
-        displayer.write(
-            historyDisplay, self.historyCount, 1, f"{mortgageSentence} : {case['name']}"
-        )
+        displayer.write(historyDisplay, text=f"{mortgageSentence} : {case['name']}")
         self.transaction(case["mortgagePrice"])
 
     def unmortgage(self, case):
@@ -278,68 +271,61 @@ class Player:
             model.index(case["membership"]), case["membership"].index(case["id"]), 1
         ] = 0
         displayer.write(
-            historyDisplay,
-            self.historyCount,
-            1,
-            f"{unMortgageSentence} : {case['name']}",
+            historyDisplay, text=f"{unMortgageSentence} : {case['name']}",
         )
         self.transaction(-case["mortgagePrice"])
 
     def build(self, case):
-        state = (
-            "1 hotel"
-            if case["built"] == 5
-            else f"{case['built']} maison{'s' if case['built'] > 1 else ''}"
-        )
         self.own[
-            model.index(case["membership"]), case["membership"].index(case["id"]), 1
+            model.index(case["membership"]), case["membership"].index(case["id"]), 2
         ] += 1
         case["built"] += 1
         displayer.write(
-            historyDisplay, self.historyCount, 1, f"{case['name']} a {state}"
+            historyDisplay,
+            text=f"{buyHouseSentence if case['built'] < 5 else buyHotelSentence} {case['name']})",
         )
         self.transaction(-case["housePrice"])
 
     def sell(self, case):
-        state = f"{case['built']} maison{'s' if case['built'] > 1 else ''}"
         self.own[
-            model.index(case["membership"]), case["membership"].index(case["id"]), 1
+            model.index(case["membership"]), case["membership"].index(case["id"]), 2
         ] -= 1
         case["built"] -= 1
         displayer.write(
-            historyDisplay, self.historyCount, 1, f"{case['name']} a {state}"
+            historyDisplay,
+            text=f"{sellHouseSentence if case['built'] < 4 else sellHotelSentence} {case['name']}",
         )
-        self.transaction(case["housePrice"] / 2)
+        self.transaction(case["housePrice"] // 2)
 
     def getIdOfMortgageable(self):
-        indexes = np.where((self.own[:, :, 0] == 1) & (self.own[:, :, 1] == 0))
-        return [model[i][y] for i, y in zip(*indexes)]
+        res = []
+        for z in range(len(model)):
+            indexes = np.where(
+                (self.own[z, : len(model[z]), 0] == 1)
+                & (self.own[z, : len(model[z]), 1] == 0)
+                & np.all(self.own[z, : len(model[z]), 2] == 0)
+            )[0]
+            for i in indexes:
+                res.append(model[z][i])
+
+        return res
 
     def getIdOfUnmortgageable(self):
         indexes = np.where((self.own[:, :, 0] == 1) & (self.own[:, :, 1] == 1))
         return [model[i][y] for i, y in zip(*indexes)]
 
-    def mortgageable(self):
-        return np.where((self.own[:, :, 0] == 1) & (self.own[:, :, 1] == 0))[0].size > 0
-
-    def unmortgageable(self):
-        return np.where((self.own[:, :, 0] == 1) & (self.own[:, :, 1] == 1))[0].size > 0
-
     def getIdOfBuildable(self):
         res = []
         for z in range(len(model)):
-            if z != 0 or z != 9:
+            if 0 < z < 9:
                 indexes = np.where(
-                    (
-                        np.count_nonzero(self.own[z, : len(model[z]), 0] == 1)
-                        == len(model[z])
-                    )
-                    & (self.own[z, : len(model[z]), 1] == 0)
+                    np.all(self.own[z, : len(model[z]), 0] == 1)
+                    & np.all(self.own[z, : len(model[z]), 1] == 0)
                     & (
                         np.amin(self.own[z, : len(model[z]), 2])
                         >= self.own[z, : len(model[z]), 2]
                     )
-                    & (self.own[z, : len(model[z]), 2] <= 5)
+                    & (self.own[z, : len(model[z]), 2] != 5)
                 )[0]
                 for i in indexes:
                     res.append(model[z][i])
@@ -348,7 +334,7 @@ class Player:
     def getIdOfSaleable(self):
         res = []
         for z in range(len(model)):
-            if z != 0 or z != 9:
+            if 0 < z < 9:
                 indexes = np.where(
                     (self.own[z, : len(model[z]), 2] > 0)
                     & (
@@ -367,10 +353,10 @@ class Player:
         if self.turn and not self.inJail:
             self.actions.append(0)
         # Mortgage
-        if self.mortgageable() and not self.forcedToJail:
+        if bool(self.getIdOfMortgageable()) and not self.forcedToJail:
             self.actions.append(1)
         # Unmortgage
-        if self.unmortgageable() and not self.forcedToJail:
+        if bool(self.getIdOfUnmortgageable()) and not self.forcedToJail:
             self.actions.append(2)
         # Build
         if bool(self.getIdOfBuildable()) and not self.forcedToJail:
@@ -379,7 +365,11 @@ class Player:
         if bool(self.getIdOfSaleable()) and not self.forcedToJail:
             self.actions.append(4)
         # End turn
-        if (self.money > 0 and not self.turn and not (self.inJail and not self.tryDouble)) or self.forcedToJail:
+        if (
+            self.money > 0
+            and not self.turn
+            and not (self.inJail and not self.tryDouble)
+        ) or self.forcedToJail:
             self.actions.append(5)
         # Try Double
         if self.inJail and not self.forcedToJail and not self.tryDouble:
@@ -391,9 +381,10 @@ class Player:
         if self.inJail and self.freeJailCard and not self.forcedToJail:
             self.actions.append(8)
 
-        return self.choice(
-            self.actions, [f"{ACTIONS[i]}" for i in self.actions]
-        )
+        return self.choice(self.actions, [f"{ACTIONS[i]}" for i in self.actions])
+
+    def gameOver():
+        displayer.write(historyDisplay, text=lost)
 
     def getPriceOfAllBuildingsForTHEFUCKING_Card(self):
         return (

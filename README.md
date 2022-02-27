@@ -27,13 +27,13 @@ Basically, you do something by pressing keys, simple as that. A key always does 
 
 ## Some cool features ?
 
-Use of **NumPy** as data structure to store player' properties
+Use of **NumPy** as data structure to store player's properties
 
 ```python
 own = np.zeros((10, 4, 3), dtype=int)
 ```
 10 families  
-4 properties by family (actually, 2, 3 or 4 but numpy doesn't allow so have to choose the max)  
+4 properties by family (actually, 2, 3 or 4 but numpy doesn't allow it so have to choose the maximum value)  
 3 different states (own, mortage, building)
 
 
@@ -44,7 +44,7 @@ Add different languages (Currently : French)
 ## What next ??
 
 I would like to upgrade it. I would like to program the first ever Mega version of the Monopoly on a computer. I think nobody has done it yet.  
-https://monopoly.fandom.com/wiki/Monopoly:_The_Mega_Edition#New_Dice
+https://monopoly.fandom.com/wiki/Monopoly:_The_Mega_Edition
 
 ## By
 

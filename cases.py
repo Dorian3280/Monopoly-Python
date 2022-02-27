@@ -10,7 +10,7 @@ cases = [
         "id": 1,
         "idColor": 0,
         "type": "property",
-        "name": "boulevard de belleville",
+        "name": "Boulevard de Belleville",
         "rent": 2,
         "house_1": 10,
         "house_2": 30,
