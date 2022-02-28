@@ -27,15 +27,15 @@ class Player:
         self.own = np.zeros((10, 4, 3), dtype=int)
         self.double = False
         self.tryDouble = False
-        self.countDouble = 0
-        self.totalDices = 0
-        self.loopWhile = False
-        self.actions = []
-        self.turn = True
+        self.payFine = False
         self.inJail = False
         self.forcedToJail = False
         self.moveOutOfJailBool = False
-        self.countTurnInJail = 0
+        self.countTurn = 0
+        self.countDouble = 0
+        self.totalDices = 0
+        self.loopWhile = False
+        self.turn = True
         self.freeJailCard = 0
         self.lastDebt = False
         self.bankruptcy = False
@@ -48,7 +48,7 @@ class Player:
         displayer.write(infoDisplay, text=f"{turn} n°{nbrTour}")
 
     def __str__(self) -> str:
-        return f"id : {self.id}\nturn : {self.turn}\nforcedToJail : {self.forcedToJail}\ninJail : {self.inJail}\ndouble : {self.double}\nmoveOutOfJailBool : {self.moveOutOfJailBool}\ncountTurnInJail : {self.countTurnInJail}\ntryDouble : {self.tryDouble}"
+        return f"id : {self.id}\nturn : {self.turn}\nforcedToJail : {self.forcedToJail}\ninJail : {self.inJail}\ndouble : {self.double}\nmoveOutOfJailBool : {self.moveOutOfJailBool}\ncountTurn : {self.countTurn}\ntryDouble : {self.tryDouble}\npayFine : {self.payFine}"
 
     def getFreeJailCard(self):
         self.freeJailCard += 1
@@ -170,7 +170,6 @@ class Player:
 
     def outOfJail(self):
         self.inJail = False
-        self.countTurnInJail = 0
         self.location = 10
         displayer.write(historyDisplay, text=f"{free}")
 
@@ -198,7 +197,6 @@ class Player:
             return 4 * self.totalDices if not isFamily else 10 * self.totalDices
 
     def landOnProperty(self):
-        print(self.location)
         case = cases[self.location]
 
         if (
@@ -237,7 +235,6 @@ class Player:
         self.turn = True
         self.forcedToJail = False
         self.tryDouble = False
-        self.actions = []
         displayer.refreshElements(
             actionsDisplay, historyDisplay, transactionDisplay, textDisplay
         )
@@ -273,7 +270,7 @@ class Player:
         displayer.write(
             historyDisplay, text=f"{unMortgageSentence} : {case['name']}",
         )
-        self.transaction(-case["mortgagePrice"])
+        self.transaction(-(case["mortgagePrice"]+case["mortgagePrice"]//10))
 
     def build(self, case):
         self.own[
@@ -347,41 +344,45 @@ class Player:
         return res
 
     def checkActions(self):
-        self.actions = []
+        actions = []
 
         # Roll dice
         if self.turn and not self.inJail:
-            self.actions.append(0)
+            actions.append(0)
         # Mortgage
         if bool(self.getIdOfMortgageable()) and not self.forcedToJail:
-            self.actions.append(1)
+            actions.append(1)
         # Unmortgage
         if bool(self.getIdOfUnmortgageable()) and not self.forcedToJail:
-            self.actions.append(2)
+            actions.append(2)
         # Build
         if bool(self.getIdOfBuildable()) and not self.forcedToJail:
-            self.actions.append(3)
+            actions.append(3)
         # Sell
         if bool(self.getIdOfSaleable()) and not self.forcedToJail:
-            self.actions.append(4)
+            actions.append(4)
         # End turn
         if (
-            self.money > 0
-            and not self.turn
-            and not (self.inJail and not self.tryDouble)
-        ) or self.forcedToJail:
-            self.actions.append(5)
+            (
+                self.money > 0
+                and not self.turn
+                and not (self.inJail and not self.tryDouble)
+            )
+            or self.forcedToJail
+            or (0 < self.countTurn < 3 and self.payFine)
+        ):
+            actions.append(5)
         # Try Double
         if self.inJail and not self.forcedToJail and not self.tryDouble:
-            self.actions.append(6)
+            actions.append(6)
         # Pay Fine
         if self.inJail and not self.forcedToJail and not self.tryDouble:
-            self.actions.append(7)
+            actions.append(7)
         # Use Free Jail Card
         if self.inJail and self.freeJailCard and not self.forcedToJail:
-            self.actions.append(8)
+            actions.append(8)
 
-        return self.choice(self.actions, [f"{ACTIONS[i]}" for i in self.actions])
+        return self.choice(actions, [f"{ACTIONS[i]}" for i in actions])
 
     def gameOver():
         displayer.write(historyDisplay, text=lost)

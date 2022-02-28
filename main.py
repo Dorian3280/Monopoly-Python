@@ -28,32 +28,29 @@ def main(std) -> int:
     random.shuffle(CARDS["chance"])
     random.shuffle(CARDS["communityChest"])
 
-    joueurID = -1
-
     while players:
         nbrTour += 1
 
         try:
+            if len(players) == 1: raise Exception
             player = next(iterPlayers)
             player(players, nbrTour)
 
-            if player.bankruptcy:
-                players.remove(player.id)
-                continue
         except StopIteration:
             iterPlayers = players.__iter__()
             continue
-
-        if joueurID == player.id:
-            print(congratulations(player.name))
+        except Exception:
+            print(congratulations(players[0].name))
             break
 
-        joueurID = player.id
+        if player.inJail or player.countTurn:
+            player.countTurn += 1
 
         while True:
 
             if player.bankruptcy:
                 player.gameOver()
+                players.remove(player.id)
                 std.getch()
                 break
 
@@ -61,9 +58,13 @@ def main(std) -> int:
 
             if player.moveOutOfJailBool is False:
                 action = player.checkActions()
-            print(str(player))
+
             # Roll dice
             if action == 0:
+
+                if player.payFine:
+                    player.payFine = False
+                    player.countTurn = 0
 
                 if not player.moveOutOfJailBool:
                     player.rollDice()
@@ -137,13 +138,11 @@ def main(std) -> int:
             if action == 6:
                 player.rollDice()
 
-                player.countTurnInJail += 1
-
                 if player.double:
                     player.moveOutOfJail()
                     player.turn = False
 
-                elif player.countTurnInJail == 3:
+                elif player.countTurn == 3:
                     player.moveOutOfJail()
                     player.transaction(-50)
 
@@ -151,6 +150,7 @@ def main(std) -> int:
 
             # Pay Fine
             if action == 7:
+                player.payFine = True
                 player.outOfJail()
                 player.transaction(-50)
 
@@ -176,7 +176,7 @@ def main(std) -> int:
                             + case["housePrice"] // 2 * case["built"]
                         )
                 if overdrawn > heritage:
-                    if player.lastDebt:
+                    if player.lastDebt is not False:
                         players[player.lastDebt].own = (
                             players[player.lastDebt].own + player.own
                         )
