@@ -69,8 +69,7 @@ class Player:
     @location.setter
     def location(self, x):
         self.__location = x
-        if x < 40:
-            displayer.player(self)
+        displayer.player(self)
 
     def choice(self, nbr, texts, multiple=False):
         displayer.refreshElement(actionsDisplay)
@@ -120,7 +119,11 @@ class Player:
         player.money = player.money + amount
         displayer.write(
             historyDisplay,
-            text=f"{namePlayer(self.id)} -> {namePlayer(player.id)} : {amount} €",
+            text=f"{landOnSentence(namePlayer(player.id))}",
+        )
+        displayer.write(
+            transactionDisplay,
+            text=f"-{amount} €",
         )
 
     def transaction(self, amount):
@@ -148,10 +151,15 @@ class Player:
         ]
 
     def moveByDice(self, nbr):
-        self.location = self.location + nbr
-        if self.location > 40:
+        temp = self.location + nbr
+        if temp > 39:
+            displayer.write(
+                historyDisplay,
+                text=f"{salary}",
+            )
             self.transaction(200)
-            self.location -= 40
+            temp -= 40
+        self.location = temp
 
     def moveByCard(self, where, backward=False, moveBackward=False):
         self.loopWhile = True

@@ -8,17 +8,6 @@ std = curses.initscr()
 
 curses.start_color()
 curses.use_default_colors()
-curses.init_pair(1, 131, -1)  # Brown
-curses.init_pair(2, 51, -1)  # Light Blue
-curses.init_pair(3, 206, -1)  # Pink
-curses.init_pair(4, 208, -1)  # Orange
-curses.init_pair(5, 4, -1)  # Red
-curses.init_pair(6, 14, -1)  # Yellow
-curses.init_pair(7, 2, -1)  # Green
-curses.init_pair(8, 27, -1)  # Dark Blue
-curses.init_pair(9, 244, -1)  # Light Grey
-curses.init_pair(10, 1, -1)  # White
-
 
 class Displayer:
     def __init__(self):
@@ -28,11 +17,11 @@ class Displayer:
         self.transaction = self.displayElement(12, 12, 2, 104)  # transactionDisplay
         self.info = self.displayElement(12, 30, 2, 120)  # InfoDisplay
         self.text = self.displayElement(4, 149, 16, 1)  # textDisplay
-        self.write(std, 1, 6, TITLES["action"])
-        self.write(std, 1, 75, TITLES["history"])
-        self.write(std, 1, 123, TITLES["info"])
-        self.write(std, 15, 64, TITLES["text"])
-        self.write(std, 21, 100, TITLES["player"])
+        self.write(std, 1, 6, text=TITLES["action"])
+        self.write(std, 1, 75, text=TITLES["history"])
+        self.write(std, 1, 123, text=TITLES["info"])
+        self.write(std, 15, 64, text=TITLES["text"])
+        self.write(std, 21, 100, text=TITLES["player"])
 
         self.historyCount = 0
 
@@ -43,6 +32,19 @@ class Displayer:
         self.refreshElement(self.info)
         self.refreshElement(self.text)
         return self.actions, self.history, self.transaction, self.info, self.text
+    @staticmethod
+    def initColor():
+        
+        curses.init_pair(1, 131, -1)  # Brown
+        curses.init_pair(2, 51, -1)  # Light Blue
+        curses.init_pair(3, 206, -1)  # Pink
+        curses.init_pair(4, 208, -1)  # Orange
+        curses.init_pair(5, 4, -1)  # Red
+        curses.init_pair(6, 14, -1)  # Yellow
+        curses.init_pair(7, 2, -1)  # Green
+        curses.init_pair(8, 27, -1)  # Dark Blue
+        curses.init_pair(9, 253, -1)  # Light Grey
+        curses.init_pair(10, -1, -1)  # White
 
     def displayElement(self, h, w, y, x):
         element = curses.newwin(h, w, y, x)
@@ -95,7 +97,7 @@ class Displayer:
                 color=cases[id]["idColor"],
             )
 
-    def write(self, component, y=1, x=2, text="", color=8):
+    def write(self, component, y=1, x=2, text="", color=10):
         if component == self.history:
             if self.historyCount > 9:
                 self.historyCount = 1
@@ -108,7 +110,7 @@ class Displayer:
         if component == self.transaction:
             y = self.historyCount
 
-        component.addstr(y, x, text, curses.color_pair(color + 1))
+        component.addstr(y, x, text, curses.color_pair(color))
         component.refresh()
 
     def refreshHistoryCount(self):

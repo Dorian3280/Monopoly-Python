@@ -1,14 +1,14 @@
 cases = [
     {
         "id": 0,
-        "idColor": 1,
+        "idColor": 10,
         "imgName": "start",
         "type": "start",
         "name": "Case depart",
     },
     {
         "id": 1,
-        "idColor": 0,
+        "idColor": 1,
         "type": "property",
         "name": "Boulevard de Belleville",
         "rent": 2,
@@ -27,14 +27,14 @@ cases = [
     },
     {
         "id": 2,
-        "idColor": 9,
+        "idColor": 10,
         "name": "Caisse de communaute",
         "imgName": "communityChest",
         "type": "communityChest",
     },
     {
         "id": 3,
-        "idColor": 0,
+        "idColor": 1,
         "type": "property",
         "name": "Rue Lecourbe",
         "rent": 4,
@@ -53,7 +53,7 @@ cases = [
     },
     {
         "id": 4,
-        "idColor": 9,
+        "idColor": 10,
         "name": "Impot sur le revenu",
         "imgName": "impot",
         "type": "tax",
@@ -61,7 +61,7 @@ cases = [
     },
     {
         "id": 5,
-        "idColor": 8,
+        "idColor": 9,
         "imgName": "station",
         "type": "station",
         "name": "Gare Montparnasse",
@@ -74,7 +74,7 @@ cases = [
     },
     {
         "id": 6,
-        "idColor": 1,
+        "idColor": 2,
         "type": "property",
         "name": "Rue Vaugirard",
         "rent": 6,
@@ -91,10 +91,10 @@ cases = [
         "mortgaged": False,
         "built": 0,
     },
-    {"id": 7, "idColor": 9, "name": "Chance", "imgName": "chance", "type": "chance",},
+    {"id": 7, "idColor": 10, "name": "Chance", "imgName": "chance", "type": "chance",},
     {
         "id": 8,
-        "idColor": 1,
+        "idColor": 2,
         "type": "property",
         "name": "Rue de Courcelles",
         "rent": 6,
@@ -113,7 +113,7 @@ cases = [
     },
     {
         "id": 9,
-        "idColor": 1,
+        "idColor": 2,
         "type": "property",
         "name": "Avenue de la République",
         "rent": 8,
@@ -132,7 +132,7 @@ cases = [
     },
     {
         "id": 10,
-        "idColor": 9,
+        "idColor": 10,
         "name": "Simple Visite",
         "namebis": "Prison",
         "imgName": "inJail",
@@ -140,7 +140,7 @@ cases = [
     },
     {
         "id": 11,
-        "idColor": 2,
+        "idColor": 3,
         "type": "property",
         "name": "Boulevard de la Villette",
         "rent": 10,
@@ -159,7 +159,7 @@ cases = [
     },
     {
         "id": 12,
-        "idColor": 8,
+        "idColor": 9,
         "type": "company",
         "imgName": "electricity",
         "name": "Compagnie de distribution d'electricité",
@@ -172,7 +172,7 @@ cases = [
     },
     {
         "id": 13,
-        "idColor": 2,
+        "idColor": 3,
         "type": "property",
         "name": "Avenue de Neuilly",
         "rent": 10,
@@ -191,7 +191,7 @@ cases = [
     },
     {
         "id": 14,
-        "idColor": 2,
+        "idColor": 3,
         "type": "property",
         "name": "Rue de Paradis",
         "rent": 12,
@@ -210,7 +210,7 @@ cases = [
     },
     {
         "id": 15,
-        "idColor": 8,
+        "idColor": 9,
         "type": "station",
         "imgName": "station",
         "name": "Gare de Lyon",
@@ -223,7 +223,7 @@ cases = [
     },
     {
         "id": 16,
-        "idColor": 3,
+        "idColor": 4,
         "type": "property",
         "name": "Avenue Mozart",
         "rent": 14,
@@ -242,14 +242,14 @@ cases = [
     },
     {
         "id": 17,
-        "idColor": 9,
+        "idColor": 10,
         "name": "Caisse de communaute",
         "imgName": "communityChest",
         "type": "communityChest",
     },
     {
         "id": 18,
-        "idColor": 3,
+        "idColor": 4,
         "type": "property",
         "name": "Boulevard Saint-Michel",
         "rent": 14,
@@ -268,7 +268,7 @@ cases = [
     },
     {
         "id": 19,
-        "idColor": 3,
+        "idColor": 4,
         "type": "property",
         "name": "Place Pigalle",
         "rent": 16,
@@ -286,14 +286,14 @@ cases = [
     },
     {
         "id": 20,
-        "idColor": 9,
+        "idColor": 10,
         "imgName": "freeParking",
         "type": "parc",
         "name": "Parc gratuit",
     },
     {
         "id": 21,
-        "idColor": 4,
+        "idColor": 5,
         "type": "property",
         "name": "Avenue Matignon",
         "rent": 18,
@@ -310,10 +310,10 @@ cases = [
         "mortgaged": False,
         "built": 0,
     },
-    {"id": 22, "idColor": 9, "name": "Chance", "imgName": "chance", "type": "chance",},
+    {"id": 22, "idColor": 10, "name": "Chance", "imgName": "chance", "type": "chance",},
     {
         "id": 23,
-        "idColor": 4,
+        "idColor": 5,
         "type": "property",
         "name": "Boulevard Malesherbes",
         "rent": 18,
@@ -332,7 +332,7 @@ cases = [
     },
     {
         "id": 24,
-        "idColor": 4,
+        "idColor": 5,
         "type": "property",
         "name": "Avenue Henri-Martin",
         "rent": 20,
@@ -351,7 +351,7 @@ cases = [
     },
     {
         "id": 25,
-        "idColor": 8,
+        "idColor": 9,
         "type": "station",
         "name": "Gare du Nord",
         "imgName": "station",
@@ -364,7 +364,7 @@ cases = [
     },
     {
         "id": 26,
-        "idColor": 5,
+        "idColor": 6,
         "type": "property",
         "name": "Faubourg Saint-Honoré",
         "rent": 22,
@@ -383,7 +383,7 @@ cases = [
     },
     {
         "id": 27,
-        "idColor": 5,
+        "idColor": 6,
         "type": "property",
         "name": "Place de la Bourse",
         "rent": 22,
@@ -402,7 +402,7 @@ cases = [
     },
     {
         "id": 28,
-        "idColor": 8,
+        "idColor": 9,
         "type": "company",
         "imgName": "water",
         "name": "Compagnie de distribution des eaux",
@@ -415,7 +415,7 @@ cases = [
     },
     {
         "id": 29,
-        "idColor": 5,
+        "idColor": 6,
         "type": "property",
         "name": "Rue de la Fayette",
         "rent": 24,
@@ -434,14 +434,14 @@ cases = [
     },
     {
         "id": 30,
-        "idColor": 9,
+        "idColor": 10,
         "imgName": "goToJail",
         "name": "Allez en prison",
         "type": "goToJail",
     },
     {
         "id": 31,
-        "idColor": 6,
+        "idColor": 7,
         "type": "property",
         "name": "Avenue Breteil",
         "rent": 26,
@@ -460,7 +460,7 @@ cases = [
     },
     {
         "id": 32,
-        "idColor": 6,
+        "idColor": 7,
         "type": "property",
         "name": "Avenue Foch",
         "rent": 26,
@@ -479,14 +479,14 @@ cases = [
     },
     {
         "id": 33,
-        "idColor": 9,
+        "idColor": 10,
         "name": "Caisse de communaute",
         "imgName": "communityChest",
         "type": "communityChest",
     },
     {
         "id": 34,
-        "idColor": 6,
+        "idColor": 7,
         "type": "property",
         "name": "Boulevard des Capucines",
         "rent": 28,
@@ -505,7 +505,7 @@ cases = [
     },
     {
         "id": 35,
-        "idColor": 8,
+        "idColor": 9,
         "type": "station",
         "name": "Gare Saint-Lazare",
         "imgName": "station",
@@ -516,10 +516,10 @@ cases = [
         "owned": False,
         "mortgaged": False,
     },
-    {"id": 36, "idColor": 9, "name": "Chance", "imgName": "chance", "type": "chance",},
+    {"id": 36, "idColor": 10, "name": "Chance", "imgName": "chance", "type": "chance",},
     {
         "id": 37,
-        "idColor": 7,
+        "idColor": 8,
         "type": "property",
         "name": "Avenue des Champs-Elysées",
         "rent": 35,
@@ -538,7 +538,7 @@ cases = [
     },
     {
         "id": 38,
-        "idColor": 9,
+        "idColor": 10,
         "name": "Taxe de luxe",
         "imgName": "luxury",
         "type": "tax",
@@ -546,7 +546,7 @@ cases = [
     },
     {
         "id": 39,
-        "idColor": 7,
+        "idColor": 8,
         "type": "property",
         "name": "Rue de la Paix",
         "rent": 50,

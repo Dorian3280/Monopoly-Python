@@ -5,12 +5,13 @@ import numpy as np
 import random
 
 from Players import Player
+from Displayer import Displayer
 from sentences import *
 from constants import *
 from cases import *
 
-
 def main(std) -> int:
+
     RESOLUTION = curses.LINES, curses.COLS
     # std.addstr(RESOLUTION[0] // 2, RESOLUTION[1] // 2 - len(welcome) // 2, welcome)
     # std.addstr(
@@ -20,6 +21,8 @@ def main(std) -> int:
     # )
     # std.refresh()
     # numberOfPlayers = ask(int, lambda x: 2 <= x <= 4)
+    
+    Displayer.initColor()
     numberOfPlayers = 2
     nbrTour = 0
 
