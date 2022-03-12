@@ -1,4 +1,5 @@
 import curses
+from genericpath import isfile
 import numpy as np
 from constants import TITLES
 from sentences import *
@@ -8,6 +9,7 @@ std = curses.initscr()
 
 curses.start_color()
 curses.use_default_colors()
+
 
 class Displayer:
     def __init__(self):
@@ -32,15 +34,15 @@ class Displayer:
         self.refreshElement(self.info)
         self.refreshElement(self.text)
         return self.actions, self.history, self.transaction, self.info, self.text
+
     @staticmethod
     def initColor():
-        
         curses.init_pair(1, 131, -1)  # Brown
         curses.init_pair(2, 51, -1)  # Light Blue
         curses.init_pair(3, 206, -1)  # Pink
         curses.init_pair(4, 208, -1)  # Orange
         curses.init_pair(5, 4, -1)  # Red
-        curses.init_pair(6, 14, -1)  # Yellow
+        curses.init_pair(6, 228, -1)  # Yellow
         curses.init_pair(7, 2, -1)  # Green
         curses.init_pair(8, 27, -1)  # Dark Blue
         curses.init_pair(9, 253, -1)  # Light Grey
@@ -51,7 +53,7 @@ class Displayer:
         element.border()
         return element
 
-    def propertiesOfPlayer(self, id):
+    def propertiesOfPlayer(self, id, isFamily):
         case = cases[id]
         built = ""
         mortgaged = mortgage if case["mortgaged"] else ""
@@ -65,9 +67,9 @@ class Displayer:
                     else f"{hotel.title()}"
                 )
             )
+        state = f"{mortgaged}{built}"
 
-        state = f"{mortgaged} {built}"
-        return f" {' ->' if state != ' ' else ''} {state}"
+        return f" {'|' if state != '' else ('<>' if isFamily else '')} {state}"
 
     def player(self, player):
         w = 55
@@ -78,30 +80,42 @@ class Displayer:
             else cases[player.location]["namebis"]
         )
         win = self.displayElement(25, w, 23, x)
-        self.write(win, 1, 2, f"{namePlayer(player.id):^50s}")
-        self.write(win, 2, 2, f"{money} : {player.money} €")
-        self.write(
-            win, 3, 2, f"{location} : {pos}", color=cases[player.location]["idColor"]
-        )
-        self.write(win, 5, 2, f"{owning:^50s}")
 
-        casesID = np.nonzero(player.own[:, :, 0])
+        if player.bankruptcy:
+            self.write(win, 9, 1, text=f"{namePlayer(player.id):^50s}", color=5)
+            self.write(win, 11, 1, text=f"{bankruptcy:^50s}", color=5)
+        else:
 
-        for i, (familyID, caseID) in enumerate(zip(*casesID)):
-            id = model[familyID][caseID]
+            self.write(win, 1, 2, text=f"{namePlayer(player.id):^50s}")
+            self.write(win, 2, 2, text=f"{money} : {player.money} €")
             self.write(
                 win,
-                7 + i,
+                3,
                 2,
-                f"{cases[id]['name']}{self.propertiesOfPlayer(id)}",
-                color=cases[id]["idColor"],
+                text=f"{location} : {pos}",
+                color=cases[player.location]["idColor"],
             )
+            self.write(win, 5, 2, text=f"{owning:^50s}")
+
+            casesID = np.nonzero(player.own[:, :, 0])
+
+            for i, (familyID, caseID) in enumerate(zip(*casesID)):
+                id = model[familyID][caseID]
+                self.write(
+                    win,
+                    7 + i,
+                    2,
+                    text=f"{cases[id]['name']}{self.propertiesOfPlayer(id, player.isFamily(id))}",
+                    color=cases[id]["idColor"],
+                )
 
     def write(self, component, y=1, x=2, text="", color=10):
         if component == self.history:
             if self.historyCount > 9:
                 self.historyCount = 1
-                self.refreshElement(component)
+                self.refreshElement(self.history)
+                self.refreshElement(self.transaction)
+
             else:
                 self.historyCount += 1
 

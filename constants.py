@@ -1,3 +1,6 @@
+NB_BOARD_CASE = 40
+NB_PLAYERS = 3
+
 ACTIONS = [
     "Jeter les des",
     "Hypothequer une propriete",
@@ -8,7 +11,7 @@ ACTIONS = [
     "Essayer de faire un double",
     "Payer 50 € pour sortir de prison",
     "Utiliser la carte Liberer de Prison",
-    "Quitter",
+    "Sortir de la partie",
 ]
 
 TITLES = {
@@ -20,7 +23,11 @@ TITLES = {
 }
 
 CARDS = {
-    "communityChest": [
+    "chest": [
+        {
+            "text": "C'est votre anniversaire: chaque joueur doit vous donner 10€.",
+            "cast": lambda x: x.birthday(),
+        },
         {
             "text": "La vente de votre stock vous rapporte 50€.",
             "cast": lambda x: x.transaction(50),
@@ -68,10 +75,6 @@ CARDS = {
         {
             "text": "Payer une amende de 10€ ou bien tirez une carte CHANCE",
             "cast": lambda x: x.transaction(-10),
-        },
-        {
-            "text": "C'est votre anniversaire: chaque joueur doit vous donner 10€.",
-            "cast": lambda x: x.transaction(40),
         },
     ],
     "chance": [

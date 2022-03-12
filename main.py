@@ -1,7 +1,4 @@
-import curses
 from curses import wrapper
-
-import numpy as np
 import random
 
 from Players import Player
@@ -10,33 +7,30 @@ from sentences import *
 from constants import *
 from cases import *
 
+
 def main(std) -> int:
 
-    RESOLUTION = curses.LINES, curses.COLS
-    # std.addstr(RESOLUTION[0] // 2, RESOLUTION[1] // 2 - len(welcome) // 2, welcome)
-    # std.addstr(
-    #     RESOLUTION[0] // 2 + 1,
-    #     RESOLUTION[1] // 2 - len(askNumberOfPlayers) // 2,
-    #     askNumberOfPlayers,
-    # )
-    # std.refresh()
-    # numberOfPlayers = ask(int, lambda x: 2 <= x <= 4)
-    
     Displayer.initColor()
-    numberOfPlayers = 2
-    nbrTour = 0
+    random.shuffle(CARDS["chance"])
+    random.shuffle(CARDS["chest"])
 
+    numberOfPlayers = NB_PLAYERS
     players = [Player(i, namePlayer(i)) for i in range(numberOfPlayers)]
     iterPlayers = players.__iter__()
-    random.shuffle(CARDS["chance"])
-    random.shuffle(CARDS["communityChest"])
 
+    nbrTour = 0
     while players:
         nbrTour += 1
 
         try:
-            if len(players) == 1: raise Exception
+            if len(players) == 1:
+                raise Exception
+
             player = next(iterPlayers)
+
+            while player is None:
+                player = next(iterPlayers)
+
             player(players, nbrTour)
 
         except StopIteration:
@@ -50,12 +44,6 @@ def main(std) -> int:
             player.countTurn += 1
 
         while True:
-
-            if player.bankruptcy:
-                player.gameOver()
-                players.remove(player.id)
-                std.getch()
-                break
 
             action = 0
 
@@ -160,37 +148,24 @@ def main(std) -> int:
             # Use Get out of jail Free
             if action == 8:
                 player.outOfJail()
-                player.freeJailCard -= 1
+                player.useFreeJailCard()
+
+            # Get out of the game
+            if action == 9:
+                player.endTurn()
+                id = player.getIndexByID()
+                players[id] = None
+                break
 
             if player.money < 0:
                 overdrawn = abs(player.money)
-                heritage = 0
-                for i in range(len(model)):
-                    id = np.where(
-                        (
-                            player.own[i, : len(model[i]), 0] == 1
-                        )  # Mortgageable property
-                        & (player.own[i, : len(model[i]), 1] == 0)  # Buildings
-                    )[0]
-                    for y in id:
-                        case = cases[model[i][y]]
-                        heritage += (
-                            case["mortgagePrice"]
-                            + case["housePrice"] // 2 * case["built"]
-                        )
+                heritage = player.getHeritage()
                 if overdrawn > heritage:
                     if player.lastDebt is not False:
-                        players[player.lastDebt].own = (
-                            players[player.lastDebt].own + player.own
-                        )
-                        players[player.lastDebt].money = (
-                            players[player.lastDebt].money + player.money
-                        )
-                        players[player.lastDebt].freeJailCard = (
-                            players[player.lastDebt].freeJailCard + player.freeJailCard
-                        )
+                        id = player.lastDebt.getIndexByID()
+                        player.turnOver(players[id])
 
-                    player.bankruptcy = True
+                    player.gameOver()
 
     return 0
 

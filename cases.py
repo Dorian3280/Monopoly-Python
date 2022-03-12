@@ -29,8 +29,8 @@ cases = [
         "id": 2,
         "idColor": 10,
         "name": "Caisse de communaute",
-        "imgName": "communityChest",
-        "type": "communityChest",
+        "imgName": "chest",
+        "type": "chest",
     },
     {
         "id": 3,
@@ -244,8 +244,8 @@ cases = [
         "id": 17,
         "idColor": 10,
         "name": "Caisse de communaute",
-        "imgName": "communityChest",
-        "type": "communityChest",
+        "imgName": "chest",
+        "type": "chest",
     },
     {
         "id": 18,
@@ -481,8 +481,8 @@ cases = [
         "id": 33,
         "idColor": 10,
         "name": "Caisse de communaute",
-        "imgName": "communityChest",
-        "type": "communityChest",
+        "imgName": "chest",
+        "type": "chest",
     },
     {
         "id": 34,

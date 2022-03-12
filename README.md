@@ -40,6 +40,7 @@ own = np.zeros((10, 4, 3), dtype=int)
 ## Todo
 
 Add different languages (Currently : French)
+add display for family in possession
 
 ## What next ??
 
