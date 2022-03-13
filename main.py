@@ -3,9 +3,10 @@ import random
 
 from Players import Player
 from Displayer import Displayer
+from cards import CARDS
+from Tiles import *
 from sentences import *
 from constants import *
-from cases import *
 
 
 def main(std) -> int:
@@ -15,12 +16,12 @@ def main(std) -> int:
     random.shuffle(CARDS["chest"])
 
     numberOfPlayers = NB_PLAYERS
-    players = [Player(i, namePlayer(i)) for i in range(numberOfPlayers)]
+    players = [Player(i, f"Joueur {i}") for i in range(numberOfPlayers)]
     iterPlayers = players.__iter__()
 
-    nbrTour = 0
+    nbrTurn = 0
     while players:
-        nbrTour += 1
+        nbrTurn += 1
 
         try:
             if len(players) == 1:
@@ -31,7 +32,7 @@ def main(std) -> int:
             while player is None:
                 player = next(iterPlayers)
 
-            player(players, nbrTour)
+            player(players, nbrTurn)
 
         except StopIteration:
             iterPlayers = players.__iter__()
@@ -77,11 +78,12 @@ def main(std) -> int:
 
                 id = player.getIdOfMortgageable()
                 x = player.choice(
-                    [i for i in range(1, len(id) + 1)], [cases[i]["name"] for i in id]
+                    [i for i in range(1, len(id) + 1)],
+                    [Displayer.formatName(TILES.loc[i]["name"]) for i in id],
                 )
                 if not x:
                     continue
-                case = cases[id[x - 1]]
+                case = TILES.loc[id[x - 1]]
                 player.mortgage(case)
 
             # Unmortage
@@ -89,11 +91,12 @@ def main(std) -> int:
 
                 id = player.getIdOfUnmortgageable()
                 x = player.choice(
-                    [i for i in range(1, len(id) + 1)], [cases[i]["name"] for i in id]
+                    [i for i in range(1, len(id) + 1)],
+                    [Displayer.formatName(TILES.loc[i]["name"]) for i in id],
                 )
                 if not x:
                     continue
-                case = cases[id[x - 1]]
+                case = TILES.loc[id[x - 1]]
                 player.unmortgage(case)
 
             # Build
@@ -101,11 +104,12 @@ def main(std) -> int:
 
                 id = player.getIdOfBuildable()
                 x = player.choice(
-                    [i for i in range(1, len(id) + 1)], [cases[i]["name"] for i in id]
+                    [i for i in range(1, len(id) + 1)],
+                    [Displayer.formatName(TILES.loc[i]["name"]) for i in id],
                 )
                 if not x:
                     continue
-                case = cases[id[x - 1]]
+                case = TILES.loc[id[x - 1]]
                 player.build(case)
 
             # Sell
@@ -113,11 +117,12 @@ def main(std) -> int:
 
                 id = player.getIdOfSaleable()
                 x = player.choice(
-                    [i for i in range(1, len(id) + 1)], [cases[i]["name"] for i in id]
+                    [i for i in range(1, len(id) + 1)],
+                    [Displayer.formatName(TILES.loc[i]["name"]) for i in id],
                 )
                 if not x:
                     continue
-                case = cases[id[x - 1]]
+                case = TILES.loc[id[x - 1]]
                 player.sell(case)
 
             # End of Turn

@@ -1,9 +1,9 @@
 import curses
-from genericpath import isfile
 import numpy as np
-from constants import TITLES
+
+from Tiles import *
+from constants import LANG
 from sentences import *
-from cases import *
 
 std = curses.initscr()
 
@@ -19,11 +19,11 @@ class Displayer:
         self.transaction = self.displayElement(12, 12, 2, 104)  # transactionDisplay
         self.info = self.displayElement(12, 30, 2, 120)  # InfoDisplay
         self.text = self.displayElement(4, 149, 16, 1)  # textDisplay
-        self.write(std, 1, 6, text=TITLES["action"])
-        self.write(std, 1, 75, text=TITLES["history"])
-        self.write(std, 1, 123, text=TITLES["info"])
-        self.write(std, 15, 64, text=TITLES["text"])
-        self.write(std, 21, 100, text=TITLES["player"])
+        self.write(std, 1, 10, text=TITLES["action"][LANG])
+        self.write(std, 1, 75, text=TITLES["history"][LANG])
+        self.write(std, 1, 123, text=TITLES["info"][LANG])
+        self.write(std, 15, 64, text=TITLES["text"][LANG])
+        self.write(std, 21, 100, text=TITLES["player"][LANG])
 
         self.historyCount = 0
 
@@ -48,65 +48,80 @@ class Displayer:
         curses.init_pair(9, 253, -1)  # Light Grey
         curses.init_pair(10, -1, -1)  # White
 
+    @staticmethod
+    def formatName(name: str, visiting=None):
+        if visiting is not None:
+            return (
+                name.split("|")[0 if visiting else 1]
+                .split(",")[LANG]
+                .replace("_", " ")
+                .title()
+            )
+        return name.split(",")[LANG].replace("_", " ").title()
+
     def displayElement(self, h, w, y, x):
         element = curses.newwin(h, w, y, x)
         element.border()
         return element
 
-    def propertiesOfPlayer(self, id, isFamily):
-        case = cases[id]
+    def propertiesOfPlayer(self, case):
+        caseState = getState(case)
         built = ""
-        mortgaged = mortgage if case["mortgaged"] else ""
+        mortgaged = mortgage[LANG] if caseState["mortgaged"] else ""
+        
         if case["type"] == "property":
             built = (
                 ""
-                if not case["built"]
+                if not caseState["built"]
                 else (
-                    f"{case['built']} {house}{'s' if case['built'] > 1 else ''}"
-                    if case["built"] < 5
+                    f"{caseState['built']} {house}{'s' if caseState['built'] > 1 else ''}"
+                    if caseState["built"] < 5
                     else f"{hotel.title()}"
                 )
             )
         state = f"{mortgaged}{built}"
 
-        return f" {'|' if state != '' else ('<>' if isFamily else '')} {state}"
+        return f" {'|' if state != '' else ('<>' if caseState['isFamily'] else '')} {state}"
 
     def player(self, player):
         w = 55
         x = 1 + player.id * w
+
         pos = (
-            cases[player.location]["name"]
-            if not player.inJail
-            else cases[player.location]["namebis"]
+            self.formatName(TILES.loc[player.location]["name"])
+            if not player.location == 10
+            else self.formatName(
+                TILES.loc[player.location]["name"], visiting=(not player.inJail)
+            )
         )
         win = self.displayElement(25, w, 23, x)
 
         if player.bankruptcy:
-            self.write(win, 9, 1, text=f"{namePlayer(player.id):^50s}", color=5)
-            self.write(win, 11, 1, text=f"{bankruptcy:^50s}", color=5)
+            self.write(win, 9, 1, text=f"{player.name:^50s}", color=5)
+            self.write(win, 11, 1, text=f"{bankruptcy[LANG]:^50s}", color=5)
         else:
 
-            self.write(win, 1, 2, text=f"{namePlayer(player.id):^50s}")
-            self.write(win, 2, 2, text=f"{money} : {player.money} €")
+            self.write(win, 1, 2, text=f"{player.name:^50s}")
+            self.write(win, 2, 2, text=f"{money[LANG]} : {player.money} €")
             self.write(
                 win,
                 3,
                 2,
-                text=f"{location} : {pos}",
-                color=cases[player.location]["idColor"],
+                text=f"{location[LANG]} : {pos}",
+                color=TILES.loc[player.location]["idColor"],
             )
-            self.write(win, 5, 2, text=f"{owning:^50s}")
+            self.write(win, 5, 2, text=f"{owning[LANG]:^50s}")
 
-            casesID = np.nonzero(player.own[:, :, 0])
+            indexes = np.where(states[:, :, 0] == player.id)
 
-            for i, (familyID, caseID) in enumerate(zip(*casesID)):
-                id = model[familyID][caseID]
+            for i, (familyID, caseID) in enumerate(zip(*indexes)):
+                case = TILES.loc[SETS[familyID][caseID]]
                 self.write(
                     win,
                     7 + i,
                     2,
-                    text=f"{cases[id]['name']}{self.propertiesOfPlayer(id, player.isFamily(id))}",
-                    color=cases[id]["idColor"],
+                    text=f"{self.formatName(case['name'])}{self.propertiesOfPlayer(case)}",
+                    color=case["idColor"],
                 )
 
     def write(self, component, y=1, x=2, text="", color=10):

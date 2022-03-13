@@ -22,25 +22,27 @@ Basically, you do something by pressing keys, simple as that. A key always does 
 | 6 | Try double (only in jail) |
 | 7 | Pay Fine (only in jail) |
 | 8 | Use Free Jail Card (only in jail) |
+| 9 | Get out of the game (bankruptcy) |
 | c | Cancel a choice |
 | q | Quit the game |
 
 ## Some cool features ?
 
-Use of **NumPy** as data structure to store player's properties
+Use of **Pandas** as data structure to store all tiles of the Monopoly Board  
+
+Use of **NumPy** as data structure to store states of all properties (owned by, mortgaged, building on)
 
 ```python
 own = np.zeros((10, 4, 3), dtype=int)
 ```
 10 families  
 4 properties by family (actually, 2, 3 or 4 but numpy doesn't allow it so have to choose the maximum value)  
-3 different states (own, mortage, building)
-
+3 different states (own, mortgage, building)
+    
 
 ## Todo
 
-Add different languages (Currently : French)
-add display for family in possession
+AI Things
 
 ## What next ??
 
