@@ -1,2 +1,2 @@
-NB_PLAYERS = 3
+NB_PLAYERS = 4
 LANG = 1

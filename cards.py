@@ -1,3 +1,6 @@
+import random
+
+
 CARDS = {
     "chest": [
         {
@@ -204,3 +207,6 @@ CARDS = {
         },
     ],
 }
+
+random.shuffle(CARDS["chance"])
+random.shuffle(CARDS["chest"])

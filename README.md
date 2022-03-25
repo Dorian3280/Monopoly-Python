@@ -23,6 +23,7 @@ Basically, you do something by pressing keys, simple as that. A key always does 
 | 7 | Pay Fine (only in jail) |
 | 8 | Use Free Jail Card (only in jail) |
 | 9 | Get out of the game (bankruptcy) |
+| e | Trade with a player |
 | c | Cancel a choice |
 | q | Quit the game |
 

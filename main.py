@@ -1,9 +1,7 @@
 from curses import wrapper
-import random
-
+from itertools import cycle
 from Players import Player
 from Displayer import Displayer
-from cards import CARDS
 from Tiles import *
 from sentences import *
 from constants import *
@@ -12,35 +10,25 @@ from constants import *
 def main(std) -> int:
 
     Displayer.initColor()
-    random.shuffle(CARDS["chance"])
-    random.shuffle(CARDS["chest"])
 
     numberOfPlayers = NB_PLAYERS
     players = [Player(i, f"Joueur {i}") for i in range(numberOfPlayers)]
-    iterPlayers = players.__iter__()
 
-    nbrTurn = 0
-    while players:
-        nbrTurn += 1
-
-        try:
-            if len(players) == 1:
-                raise Exception
-
-            player = next(iterPlayers)
-
-            while player is None:
-                player = next(iterPlayers)
-
-            player(players, nbrTurn)
-
-        except StopIteration:
-            iterPlayers = players.__iter__()
+    cycled = cycle(players)
+    lastPlayer = -1
+    while True:
+        player = next(cycled)
+        player(players)
+        
+        if player.bankruptcy:
             continue
-        except Exception:
+        
+        if lastPlayer == player.id:
             print(congratulations(players[0].name))
             break
-
+            
+        lastPlayer = player.id
+        
         if player.inJail or player.countTurn:
             player.countTurn += 1
 
@@ -159,14 +147,13 @@ def main(std) -> int:
             if action == 9:
                 player.endTurn()
                 id = player.getIndexByID()
-                players[id] = None
                 break
 
             if player.money < 0:
                 overdrawn = abs(player.money)
                 heritage = player.getHeritage()
                 if overdrawn > heritage:
-                    if player.lastDebt is not False:
+                    if player.lastDebt != -1:
                         id = player.lastDebt.getIndexByID()
                         player.turnOver(players[id])
 

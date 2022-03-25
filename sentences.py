@@ -37,14 +37,24 @@ mortgage = ["Mortgaged", "Hypotheque"]
 house = ["house", "maison"]
 hotel = ["hotel", "hotel"]
 buy = ["Buy", "Acheter"]
-notBuy = ["Do not buy", "Ne pas acheter"]
+auction = ["Auction", "Mettre aux encheres"]
 lost = ["You lost", "Vous avez perdu"]
 win = ["You earn", "Vous avez gagne"]
 free = ["You get out of jail", "Vous sortez de prison"]
 inJail = ["You go to jail", "Vous allez en prison"]
-lost = ["Vous have lost the game :( ....", "Vous avez perdu la partie :( ...."]
+lostGame = ["Vous have lost the game :( ....", "Vous avez perdu la partie :( ...."]
 bankruptcy = ["Bankrupt", "En faillite"]
 moneySign = ["£", "€"]
+accept = ["Accept", "Accepter"]
+decline = ["Decline", "Decliner"]
+bid = ["Bid", "Offre"]
+out = ["Get out", "Sortir"]
+isOut = ["is out", "est sorti"]
+winAuction = ["won the auction", "a gagne la vente aux encheres"]
+offers = ["offers", "propose"]
+bidAmountSentence = ["Bis's amount", "Montant de l'encheres"]
+remains = ["Remaining bidders", "Offreurs restants"]
+objectOfAuction = ["Object of the auction", "Objet de l'encheres"]
 
 ACTIONS = [
     ["Roll Dice", "Jeter les des"],
@@ -54,15 +64,16 @@ ACTIONS = [
     ["Sell", "Vendre"],
     ["End your turn", "Fin de tour"],
     ["Throwing doubles", "Essayer de faire un double"],
-    ["Pay a fine of 50 €", "Payer 50 € pour sortir de prison"],
+    ["Pay a fine of 50€", "Payer 50€ pour sortir de prison"],
     ["Use the get out of jail card", "Utiliser la carte Liberer de Prison"],
     ["Retire from the game", "Sortir de la partie"],
 ]
 
 TITLES = {
-    "action": ["Press a key", "Appuyer sur une touche"],
+    "action": ["Choose an action", "Choississez une action"],
     "history": ["History", "Historique"],
     "player": ["Players' informations", "Informations des joueurs"],
     "text": ["Text Displaying", "Affichage du texte"],
-    "info": ["Game's information", "Informations de la partie"],
+    "auction" : ["Auction", "Vente aux encheres"],
+    "trade" : ["Trade", "Echange"],
 }
