@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from curses import initscr, flushinp
-from curses.textpad import Textbox
 from itertools import cycle
 import numpy as np
+from Bank import Bank
 
 from Displayer import Displayer
 from cards import CARDS
@@ -15,10 +15,9 @@ std = initscr()
 
 # Use this to similate pattern of actions you want to get
 # e.g. rollDice, buy, endTurn = [0, 1, 5]
-# same goes for dices :
-# e.g. 7 then 8 = [[5, 2], [6, 2]]
+# you can also set the next dices numbers
+# dices = [3, 2]
 debug = []
-debugDices = []
 
 displayer = Displayer()
 (
@@ -59,20 +58,14 @@ class Player:
         self.auctioning = False
         self.bankruptcy = False
         self.players: Player[Player] = []
+        self.bank: Bank = None
         displayer.player(self)
 
-    def __call__(self, players):
+    def __call__(self, players, bank):
         self.players = players
         self.current = True
+        self.bank = bank
         displayer.write(historyDisplay, text=f"{currentTurn(self.name)[LANG]}")
-
-    def getFreeJailCard(self):
-        self.freeJailCard += 1
-        displayer.write(historyDisplay, text=f"{getFreeJailCard[LANG]}")
-
-    def useFreeJailCard(self):
-        self.freeJailCard -= 1
-        displayer.write(historyDisplay, text=f"{useFreeJailCard[LANG]}")
 
     @property
     def money(self):
@@ -97,19 +90,15 @@ class Player:
             (i for i, player in enumerate(self.players) if player.id == self.id), -1
         )
 
-    def clear(self, element):
-        if element == "text":
-            displayer.refreshElement(textDisplay)
-
     def choose(self, nbr, texts, action=False):
-        if debug: return debug.pop(0)
+        if debug:
+            return debug.pop(0)
         displayer.refreshElement(actionsDisplay)
 
         for i in range(len(texts)):
             displayer.write(actionsDisplay, y=1 + i, text=f"{nbr[i]} : {texts[i]}")
 
         while True:
-            flushinp()
             try:
                 x = std.getkey()
                 if x == "q":
@@ -126,8 +115,10 @@ class Player:
                 pass
 
     def chooseNumber(self, text, verify):
-        if debug: return debug.pop(0)
-        
+        if debug:
+            return debug.pop(0)
+        flushinp()
+
         nb = ""
         while True:
             displayer.write(textDisplay, text=f"{text[LANG]} : {nb}")
@@ -150,7 +141,6 @@ class Player:
 
     def rollDice(self):
         dices = np.random.randint(1, 7, size=2)
-        if debugDices: return debugDices.pop(0)
         self.totalDices = np.sum(dices)
 
         if dices[0] == dices[1]:
@@ -228,16 +218,16 @@ class Player:
         self.inJail = True
         self.turn = False
         self.location = 10
-        displayer.write(historyDisplay, text=f"{inJail[LANG]}")
+        displayer.write(historyDisplay, text=f"{moveToJailSentence[LANG]}")
 
     def outOfJail(self):
         self.inJail = False
         self.location = 10
-        displayer.write(historyDisplay, text=f"{free[LANG]}")
+        displayer.write(historyDisplay, text=f"{outOfFailSentence[LANG]}")
 
     def moveOutOfJail(self):
-        self.outOfJail()
         self.moveOutOfJailBool = True
+        self.outOfJail()
 
     def getPrice(self, case, caseState, double):
         price = 0
@@ -248,9 +238,7 @@ class Player:
                 else case[f"house_{caseState['built']}"]
             )
         elif case["type"] == "railroad":
-            price = case["rent"] * np.count_nonzero(
-                states[SETS.index(case["membership"]), :, 0]
-            )
+            price = case["rent"] * np.count_nonzero(states[case["idFamily"], :, 0])
             if double:
                 price *= 2
         else:
@@ -418,12 +406,19 @@ class Player:
         states[case["idFamily"], case["idInFamily"], 1] = 0
         displayer.write(
             historyDisplay,
-            text=f"{displayer.formatName(case['name'])} {unMortgageSentence[LANG]}",
+            text=f"{displayer.formatName(case['name'])} {unmortgageSentence[LANG]}",
         )
         self.transaction(-(case["mortgagePrice"] + case["mortgagePrice"] // 10))
 
     def build(self, case):
         states[case["idFamily"], case["idInFamily"], 2] += 1
+        if states[case["idFamily"], case["idInFamily"], 2] < 5:
+            self.bank.remainingHouses -= 1
+        else:
+            self.bank.remainingHouses += 4
+            self.bank.remainingHotels -= 1
+        self.bank()
+
         displayer.write(
             historyDisplay,
             text=f"{buyBuildingSentence[LANG]} {displayer.formatName(case['name'])}",
@@ -431,7 +426,16 @@ class Player:
         self.transaction(-case["housePrice"])
 
     def sell(self, case):
+        if states[case["idFamily"], case["idInFamily"], 2] == 5:
+            self.bank.remainingHotels += 1
+            self.bank.remainingHouses -= 4
+        else:
+            self.bank.remainingHouses += 1
+        self.bank()
+
         states[case["idFamily"], case["idInFamily"], 2] -= 1
+
+        self.bank.remainingHouses += 1
         displayer.write(
             historyDisplay,
             text=f"{sellBuildingSentence[LANG]} {displayer.formatName(case['name'])}",
@@ -476,6 +480,11 @@ class Player:
                         >= states[z, : len(SETS[z]), 2]
                     )
                     & (states[z, : len(SETS[z]), 2] != 5)
+                    & (
+                        self.bank.remainingHouses > 0
+                        if np.any(states[z, : len(SETS[z]), 2] < 4)
+                        else self.bank.remainingHotels > 0
+                    )
                 )[0]
                 for i in indexes:
                     res.append(SETS[z][i])
@@ -491,10 +500,29 @@ class Player:
                         np.amax(states[z, : len(SETS[z]), 2])
                         <= states[z, : len(SETS[z]), 2]
                     )
+                    & (
+                        self.bank.remainingHouses >= 4
+                        if np.any(states[z, : len(SETS[z]), 2] == 5)
+                        else True
+                    )
                 )[0]
                 for i in indexes:
                     res.append(SETS[z][i])
         return res
+
+    def giveProperties(self, id, properties):
+        print(id, properties, end="")
+        for c in properties:
+            case = TILES.loc[c]
+            states[case["idFamily"], case["idInFamily"], 0] = id
+
+    def getFreeJailCard(self):
+        self.freeJailCard += 1
+        displayer.write(historyDisplay, text=f"{getFreeJailCard[LANG]}")
+
+    def useFreeJailCard(self):
+        self.freeJailCard -= 1
+        displayer.write(historyDisplay, text=f"{useFreeJailCard[LANG]}")
 
     def checkActions(self):
         actions = []
@@ -597,19 +625,14 @@ class Player:
 
         displayer.refreshElement(tradeDisplay)
 
-    def acceptTrade(self, trader, dict):
+    def acceptTrade(self, trader: Player, dict):
         trader.money += dict["give"]["money"]
         self.money += dict["get"]["money"]
         trader.money -= dict["get"]["money"]
         self.money -= dict["give"]["money"]
 
-        for c in dict["get"]["properties"]:
-            case = TILES.loc[c]
-            states[case["idFamily"], case["idInFamily"], 0] = self.id
-
-        for c in dict["give"]["properties"]:
-            case = TILES.loc[c]
-            states[case["idFamily"], case["idInFamily"], 0] = trader.id
+        trader.giveProperties(self.id, dict["get"]["properties"])
+        self.giveProperties(trader.id, dict["give"]["properties"])
 
         displayer.player(self)
         displayer.player(trader)
@@ -617,11 +640,6 @@ class Player:
 
     def refuseTrade(self, trader):
         displayer.write(historyDisplay, text=f"{trader.name} {declineTrade[LANG]}")
-
-    def turnOver(self, creditor):
-        creditor.own += states
-        creditor.money += self.money
-        creditor.freeJailCard += self.freeJailCard
 
     def getHeritage(self):
         heritage = 0

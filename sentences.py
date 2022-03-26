@@ -1,6 +1,6 @@
 congratulations = lambda x: [
     f"Congratulations {x} ! You won the game !!!",
-    f"Felicitations {x} ! Vous avez gagné la partie !!!",
+    f"Felicitations {x} ! Vous avez gagne la partie !!!",
 ]
 currentTurn = lambda x: [f"{x}'s turn", f"Au tour de {x}"]
 drawCards = lambda x: [f"Draw {x}", f"Vous tirez une carte {x}"]
@@ -17,7 +17,7 @@ buySentence = ["You get", "Vous achetez"]
 buyBuildingSentence = ["Building on", "Construction sur"]
 sellBuildingSentence = ["Sale on", "Vente sur"]
 mortgageSentence = ["is mortgaged", "est hypotheque"]
-unMortgageSentence = ["is no longer mortgaged", "n'est plus hypotheque"]
+unmortgageSentence = ["is no longer mortgaged", "n'est plus hypotheque"]
 salary = ["You get your salary", "Vous recevez votre salaire"]
 getFreeJailCard = [
     "You get the get out of jail free card",
@@ -30,12 +30,14 @@ useFreeJailCard = [
 mortgage = ["Mortgaged", "Hypotheque"]
 house = ["house", "maison"]
 hotel = ["hotel", "hotel"]
+remainingHouses = ["Remaining Houses", "Maisons restantes"]
+remainingHotels = ["Remaining Hotels", "Hotels restants"]
 buy = ["Buy", "Acheter"]
 auction = ["Auction", "Mettre aux encheres"]
 lost = ["You lost", "Vous avez perdu"]
 win = ["You earn", "Vous avez gagne"]
-free = ["You get out of jail", "Vous sortez de prison"]
-inJail = ["You go to jail", "Vous allez en prison"]
+outOfFailSentence = ["You get out of jail", "Vous sortez de prison"]
+moveToJailSentence = ["You go to jail", "Vous allez en prison"]
 lostGame = ["Vous have lost the game :( ....", "Vous avez perdu la partie :( ...."]
 bankruptcy = ["Bankrupt", "En faillite"]
 moneySign = ["£", "€"]
@@ -57,7 +59,7 @@ chooseTileSentence = [
 ]
 choosePlayerSentence = [
     "Choose any player you want to trade with",
-    "Choississez le joueuer avec qui vous voulez echanger",
+    "Choississez le joueur avec qui vous voulez echanger",
 ]
 chooseNumberSentence = ["Choose an amount", "Choississez un montant"]
 

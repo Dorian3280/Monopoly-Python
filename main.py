@@ -1,5 +1,6 @@
 from curses import wrapper
 from itertools import cycle
+from Bank import Bank
 from Players import Player
 from Displayer import Displayer
 from Tiles import *
@@ -13,12 +14,14 @@ def main(std) -> int:
 
     numberOfPlayers = NB_PLAYERS
     players = [Player(i, f"{genName[LANG]} {i+1}") for i in range(numberOfPlayers)]
+    bank = Bank()
 
     cycled = cycle(players)
     lastPlayer = -1
     while True:
         player = next(cycled)
-        player(players)
+        player(players, bank)
+        bank()
 
         if player.bankruptcy:
             continue
@@ -114,7 +117,6 @@ def main(std) -> int:
             # Get out of the game
             if action == 9:
                 player.endTurn()
-                id = player.getIndexByID()
                 break
 
             if action == "e":
@@ -124,9 +126,11 @@ def main(std) -> int:
                 overdrawn = abs(player.money)
                 heritage = player.getHeritage()
                 if overdrawn > heritage:
+                    player.giveProperties(player.lastDebt, player.getIdOfOwn())
                     if player.lastDebt != -1:
                         id = player.lastDebt.getIndexByID()
-                        player.turnOver(players[id])
+                        players[id].money += player.money
+                        players[id].freeJailCard += player.freeJailCard
 
                     player.gameOver()
 

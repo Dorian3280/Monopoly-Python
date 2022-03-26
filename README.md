@@ -34,7 +34,7 @@ Use of **Pandas** as data structure to store all tiles of the Monopoly Board
 Use of **NumPy** as data structure to store states of all properties (owned by, mortgaged, building on)
 
 ```python
-own = np.zeros((10, 4, 3), dtype=int)
+states = np.zeros((10, 4, 3), dtype=int)
 ```
 10 families  
 4 properties by family (actually, 2, 3 or 4 but numpy doesn't allow it so have to choose the maximum value)  

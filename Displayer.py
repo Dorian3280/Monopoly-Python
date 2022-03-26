@@ -100,9 +100,9 @@ class Displayer:
                 ""
                 if not caseState["built"]
                 else (
-                    f"{caseState['built']} {house}{'s' if caseState['built'] > 1 else ''}"
+                    f"{caseState['built']} {house[LANG]}{'s' if caseState['built'] > 1 else ''}"
                     if caseState["built"] < 5
-                    else f"{hotel.title()}"
+                    else f"{hotel[LANG].title()}"
                 )
             )
         state = f"{mortgaged}{built}"
@@ -150,6 +150,17 @@ class Displayer:
                     text=f"{case['id']} - {self.formatName(case['name'])}{self.propertiesOfPlayer(case)}",
                     color=case["idColor"],
                 )
+
+    def bank(self, bank):
+        self.write(
+            std,
+            x=0,
+            y=std.getmaxyx()[0] - 1,
+            text=self.align(
+                f"{remainingHouses[LANG]} : {bank.remainingHouses} & {remainingHotels[LANG]} : {bank.remainingHotels}",
+                w=std.getmaxyx()[1],
+            ),
+        )
 
     def write(self, component, y=1, x=2, text="", color=10):
         if component == self.history:

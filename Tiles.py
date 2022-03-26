@@ -33,9 +33,7 @@ states[:, :, 0] = -1  # Give all properties to the bank
 
 
 def getState(case):
-    res = states[
-        case["idFamily"], np.argwhere(SETS[case["idFamily"]] == case["id"])[0][0]
-    ]
+    res = states[case["idFamily"], case["idInFamily"]]
     isFamily = bool(
         np.where(
             (
