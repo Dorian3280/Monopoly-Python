@@ -14,18 +14,22 @@ curses.use_default_colors()
 class Displayer:
     def __init__(self):
 
-        self.actions = self.displayElement(11, 36, 1, 1) # actionsDisplay
-        self.history = self.displayElement(11, 69, 1, 38) # historyDisplay
-        self.text = self.displayElement(4, 106, 12, 1) # textDisplay
-        self.miscellaneous = self.displayElement(15, 93, 1, 108) # miscellaneousDisplay
-        self.miscellaneousLeft = self.miscellaneous.derwin(13, 44, 1, 1)
-        self.miscellaneousRight = self.miscellaneous.derwin(13, 44, 1, 44)
-        self.transaction = self.history.derwin(11, 10, 0, 59) # transactionDisplay
-        
+        self.actions = self.displayElement(11, 36, 1, 1)  # actionsDisplay
+        self.history = self.displayElement(11, 69, 1, 38)  # historyDisplay
+        self.text = self.displayElement(4, 106, 12, 1)  # textDisplay
+        self.auction = self.displayElement(15, 93, 1, 108)  # auctionDisplay
+        self.auctionLeft = self.auction.derwin(13, 44, 1, 1)
+        self.auctionRight = self.auction.derwin(13, 44, 1, 44)
+        self.trade = self.displayElement(15, 93, 1, 108)  # tradeDisplay
+        self.tradeLeft = self.auction.derwin(13, 44, 1, 1)
+        self.tradeRight = self.auction.derwin(13, 44, 1, 44)
+        self.transaction = self.history.derwin(11, 10, 0, 59)  # transactionDisplay
+
         self.write(std, 0, 7, text=TITLES["action"][LANG])
         self.write(std, 0, 65, text=TITLES["history"][LANG])
-        self.write(std, 0, 138, text=f"{TITLES['auction'][LANG]} / {TITLES['trade'][LANG]}")
-        
+        self.write(
+            std, 0, 138, text=f"{TITLES['auction'][LANG]} / {TITLES['trade'][LANG]}"
+        )
 
         self.countLineHistory = 0
         self.countLineAuction = 0
@@ -34,8 +38,19 @@ class Displayer:
         self.refreshElement(self.actions)
         self.refreshElement(self.history)
         self.refreshElement(self.text)
-        self.refreshElement(self.miscellaneous)
-        return self.actions, self.history, self.transaction, self.text, self.miscellaneous, self.miscellaneousLeft, self.miscellaneousRight
+        self.refreshElement(self.auction)
+        return (
+            self.actions,
+            self.history,
+            self.transaction,
+            self.text,
+            self.auction,
+            self.auctionLeft,
+            self.auctionRight,
+            self.trade,
+            self.tradeLeft,
+            self.tradeRight,
+        )
 
     @staticmethod
     def initColor():
@@ -61,6 +76,15 @@ class Displayer:
             )
         return name.split(",")[LANG].replace("_", " ").title()
 
+    @staticmethod
+    def align(str: str, w, surroundBy=" ", nb=1, align="^"):
+        str = f"{' '*nb}{str}{' '*nb}"
+        return f"{str:{surroundBy}{align}{w-2}s}"
+
+    def addArrow(self, str, right):
+        arrow = "← " if right else " →"
+        return f"{arrow if right else ''}{str}{arrow if not right else ''}"
+
     def displayElement(self, h, w, y, x):
         element = curses.newwin(h, w, y, x)
         element.border()
@@ -70,7 +94,7 @@ class Displayer:
         caseState = getState(case)
         built = ""
         mortgaged = mortgage[LANG] if caseState["mortgaged"] else ""
-        
+
         if case["type"] == "property":
             built = (
                 ""
@@ -96,23 +120,24 @@ class Displayer:
                 TILES.loc[player.location]["name"], visiting=(not player.inJail)
             )
         )
-        win = self.displayElement(37, w, 16, x)
-
+        win = self.displayElement(38, w, 16, x)
         if player.bankruptcy:
-            self.write(win, 9, 1, text=f"{player.name:^47s}", color=5)
+            self.write(
+                win, 9, 1, text=self.align(player.name, win.getmaxyx()[1], "x"), color=5
+            )
             self.write(win, 11, 1, text=f"{bankruptcy[LANG]:^47s}", color=5)
         else:
-
-            self.write(win, 1, 2, text=f"{player.name:^47s}")
-            self.write(win, 2, 2, text=f"{money[LANG]} : {player.money} €")
+            self.write(win, 1, 1, text=self.align(player.name, win.getmaxyx()[1], "*"))
+            self.write(win, 3, 2, text=f"ID : {player.id}")
+            self.write(win, 4, 2, text=f"{money[LANG]} : {player.money} €")
             self.write(
                 win,
-                3,
+                5,
                 2,
                 text=f"{location[LANG]} : {pos}",
                 color=TILES.loc[player.location]["idColor"],
             )
-            self.write(win, 5, 2, text=f"{owning[LANG]:^47s}")
+            self.write(win, 7, 1, text=self.align(owning[LANG], win.getmaxyx()[1], "+"))
 
             indexes = np.where(states[:, :, 0] == player.id)
 
@@ -120,9 +145,9 @@ class Displayer:
                 case = TILES.loc[SETS[familyID][caseID]]
                 self.write(
                     win,
-                    7 + i,
+                    9 + i,
                     2,
-                    text=f"{self.formatName(case['name'])}{self.propertiesOfPlayer(case)}",
+                    text=f"{case['id']} - {self.formatName(case['name'])}{self.propertiesOfPlayer(case)}",
                     color=case["idColor"],
                 )
 
@@ -131,7 +156,8 @@ class Displayer:
             if self.countLineHistory > 9:
                 self.countLineHistory = 1
                 self.refreshElement(component)
-                if component == self.history : self.refreshElement(self.transaction)
+                if component == self.history:
+                    self.refreshElement(self.transaction)
 
             else:
                 self.countLineHistory += 1
@@ -140,8 +166,8 @@ class Displayer:
 
         if component == self.transaction:
             y = self.countLineHistory
-            
-        if component == self.miscellaneousLeft:
+
+        if component == self.auctionLeft:
             if self.countLineAuction > 9:
                 self.countLineAuction = 1
                 self.refreshElement(component)
@@ -150,26 +176,25 @@ class Displayer:
                 self.countLineAuction += 1
 
             y = self.countLineAuction
-            
 
         component.addstr(y, x, text, curses.color_pair(color))
         component.refresh()
-    
+
     def concat(self, component, text, color=10):
         component.addstr(text, curses.color_pair(color))
         component.refresh()
 
     def refreshCounter(self, type):
-        if type == 'history':
+        if type == "history":
             self.countLineHistory = 0
-        if type == 'auction':
+        if type == "auction":
             self.countLineAuction = 0
 
     def refreshElement(self, element):
         element.clear()
         element.border()
         element.refresh()
-        
+
     def refreshElementWithoutBorder(self, element):
         element.clear()
         element.refresh()
@@ -184,14 +209,58 @@ class Displayer:
         elem = curses.newwin(12, 35, 2, 165)
         elem.border()
         return elem
-    
-    def auctionInfo(self, component, bidAmount, name, case, players):
-        self.write(component, 0, 22, text='Info')
-        self.write(component, 2, 2, text=f"{objectOfAuction[LANG]} :")
-        self.write(component, 3, 7, text=self.formatName(case["name"]), color=case["idColor"])
-        self.write(component, 4, 2, text=f'{bidAmountSentence[LANG]} : {bidAmount} {moneySign[LANG]}')
-        self.write(component, 5, 2, text=currentTurn[LANG](name))
-        self.write(component, 7, 15, text=f'{remains[LANG]}')
+
+    def auctionInfo(self, bidAmount, name, case, players):
+        self.refreshElementWithoutBorder(self.auctionRight)
+        self.write(
+            self.auctionRight,
+            y=0,
+            text=self.align("Info", self.auctionRight.getmaxyx()[1], "-"),
+        )
+        self.write(self.auctionRight, 2, 2, text=f"{objectOfAuction[LANG]} :")
+        self.write(
+            self.auctionRight,
+            3,
+            7,
+            text=self.formatName(case["name"]),
+            color=case["idColor"],
+        )
+        self.write(
+            self.auctionRight,
+            4,
+            2,
+            text=f"{bidAmountSentence[LANG]} : {bidAmount} {moneySign[LANG]}",
+        )
+        self.write(self.auctionRight, 5, 2, text=currentTurn(name)[LANG])
+        self.write(self.auctionRight, 7, 15, text=f"{remains[LANG]}")
         remaining = [p.name for p in players if p.auctioning and not p.bankruptcy]
         for i, p in enumerate(remaining):
-            self.write(component, 8+i, 2, text=f'{p}')
+            self.write(self.auctionRight, 8 + i, 2, text=f"{p}")
+
+    def tradeInfo(self, component, name, data):
+        align = "<" if component == self.tradeRight else ">"
+        self.write(component, y=0, text=self.align(name, component.getmaxyx()[1], "-"))
+        if data["money"] > 0:
+            self.write(
+                component,
+                y=2,
+                text=self.align(
+                    self.addArrow(f"{data['money']}", component == self.tradeRight),
+                    component.getmaxyx()[1],
+                    align=align,
+                ),
+            )
+        for i, p in enumerate(data["properties"]):
+            case = TILES.loc[p]
+            self.write(
+                component,
+                y=3 + i,
+                text=self.align(
+                    self.addArrow(
+                        self.formatName(case["name"]), component == self.tradeRight
+                    ),
+                    component.getmaxyx()[1],
+                    align=align,
+                ),
+                color=case["idColor"],
+            )

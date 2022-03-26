@@ -1,19 +1,13 @@
-congratulations = [
-    lambda x: f"Congratulations {x} ! You won the game !!!",
-    lambda x: f"Felicitations {x} ! Vous avez gagné la partie !!!",
+congratulations = lambda x: [
+    f"Congratulations {x} ! You won the game !!!",
+    f"Felicitations {x} ! Vous avez gagné la partie !!!",
 ]
-currentTurn = [
-    lambda x: f"{x}'s turn",
-    lambda x: f"Au tour de {x}",
-]
-drawCards = [
-    lambda x: f"Draw {x} card",
-    lambda x: f"Vous tirez une carte {x}",
-]
-payToSentence = [
-    lambda x: f"you pay a rent to {x}",
-    lambda x: f"Vous payez a {x}",
-]
+currentTurn = lambda x: [f"{x}'s turn", f"Au tour de {x}"]
+drawCards = lambda x: [f"Draw {x}", f"Vous tirez une carte {x}"]
+payToSentence = lambda x: [f"you pay a rent to {x}", f"Vous payez a {x}"]
+playerBuySentence = lambda x: [f"{x} bought", f"{x} a achete"]
+
+genName = ["Player", "Joueur"]
 nbrTurnSentence = ["Number of turn", "Nombre de tour"]
 money = ["Money", "Argent"]
 location = ["Location", "Position"]
@@ -47,6 +41,8 @@ bankruptcy = ["Bankrupt", "En faillite"]
 moneySign = ["£", "€"]
 accept = ["Accept", "Accepter"]
 decline = ["Decline", "Decliner"]
+acceptTrade = ["accept the deal", "a accepte l'echange"]
+declineTrade = ["decline the deal", "a refuse l'echange"]
 bid = ["Bid", "Offre"]
 out = ["Get out", "Sortir"]
 isOut = ["is out", "est sorti"]
@@ -55,6 +51,15 @@ offers = ["offers", "propose"]
 bidAmountSentence = ["Bis's amount", "Montant de l'encheres"]
 remains = ["Remaining bidders", "Offreurs restants"]
 objectOfAuction = ["Object of the auction", "Objet de l'encheres"]
+chooseTileSentence = [
+    "Choose any property you own by entering his id",
+    "Choississez la propriete en rentrant son id",
+]
+choosePlayerSentence = [
+    "Choose any player you want to trade with",
+    "Choississez le joueuer avec qui vous voulez echanger",
+]
+chooseNumberSentence = ["Choose an amount", "Choississez un montant"]
 
 ACTIONS = [
     ["Roll Dice", "Jeter les des"],
@@ -74,6 +79,14 @@ TITLES = {
     "history": ["History", "Historique"],
     "player": ["Players' informations", "Informations des joueurs"],
     "text": ["Text Displaying", "Affichage du texte"],
-    "auction" : ["Auction", "Vente aux encheres"],
-    "trade" : ["Trade", "Echange"],
+    "auction": ["Auction", "Vente aux encheres"],
+    "trade": ["Trade", "Echange"],
 }
+
+TRADE = [
+    ["Select your properties", "Choisis tes proprietes"],
+    ["Give your money", "Donne ton argent"],
+    ["Select his properties", "Choisis ses proprietes"],
+    ["Get his money", "Prend son argent"],
+    ["Propose", "Demande"],
+]

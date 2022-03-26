@@ -9,6 +9,7 @@ TILES = (
         names=[
             "id",
             "idFamily",
+            "idInFamily",
             "idColor",
             "type",
             "name",

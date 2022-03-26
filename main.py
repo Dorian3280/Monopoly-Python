@@ -12,23 +12,23 @@ def main(std) -> int:
     Displayer.initColor()
 
     numberOfPlayers = NB_PLAYERS
-    players = [Player(i, f"Joueur {i}") for i in range(numberOfPlayers)]
+    players = [Player(i, f"{genName[LANG]} {i+1}") for i in range(numberOfPlayers)]
 
     cycled = cycle(players)
     lastPlayer = -1
     while True:
         player = next(cycled)
         player(players)
-        
+
         if player.bankruptcy:
             continue
-        
+
         if lastPlayer == player.id:
-            print(congratulations(players[0].name))
+            print(congratulations(players[0].name)[LANG])
             break
-            
+
         lastPlayer = player.id
-        
+
         if player.inJail or player.countTurn:
             player.countTurn += 1
 
@@ -63,55 +63,23 @@ def main(std) -> int:
 
             # Mortgage
             if action == 1:
-
-                id = player.getIdOfMortgageable()
-                x = player.choice(
-                    [i for i in range(1, len(id) + 1)],
-                    [Displayer.formatName(TILES.loc[i]["name"]) for i in id],
-                )
-                if not x:
+                if not player.actionOnProperty("mortgage"):
                     continue
-                case = TILES.loc[id[x - 1]]
-                player.mortgage(case)
 
             # Unmortage
             if action == 2:
-
-                id = player.getIdOfUnmortgageable()
-                x = player.choice(
-                    [i for i in range(1, len(id) + 1)],
-                    [Displayer.formatName(TILES.loc[i]["name"]) for i in id],
-                )
-                if not x:
+                if not player.actionOnProperty("unmortgage"):
                     continue
-                case = TILES.loc[id[x - 1]]
-                player.unmortgage(case)
 
             # Build
             if action == 3:
-
-                id = player.getIdOfBuildable()
-                x = player.choice(
-                    [i for i in range(1, len(id) + 1)],
-                    [Displayer.formatName(TILES.loc[i]["name"]) for i in id],
-                )
-                if not x:
+                if not player.actionOnProperty("build"):
                     continue
-                case = TILES.loc[id[x - 1]]
-                player.build(case)
 
             # Sell
             if action == 4:
-
-                id = player.getIdOfSaleable()
-                x = player.choice(
-                    [i for i in range(1, len(id) + 1)],
-                    [Displayer.formatName(TILES.loc[i]["name"]) for i in id],
-                )
-                if not x:
+                if not player.actionOnProperty("sell"):
                     continue
-                case = TILES.loc[id[x - 1]]
-                player.sell(case)
 
             # End of Turn
             if action == 5:
@@ -148,6 +116,9 @@ def main(std) -> int:
                 player.endTurn()
                 id = player.getIndexByID()
                 break
+
+            if action == "e":
+                player.trade()
 
             if player.money < 0:
                 overdrawn = abs(player.money)

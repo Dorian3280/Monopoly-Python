@@ -13,15 +13,25 @@ from constants import *
 
 std = initscr()
 
+# Use this to similate pattern of actions you want to get
+# e.g. rollDice, buy, endTurn = [0, 1, 5]
+# same goes for dices :
+# e.g. 7 then 8 = [[5, 2], [6, 2]]
+debug = []
+debugDices = []
+
 displayer = Displayer()
 (
     actionsDisplay,
     historyDisplay,
     transactionDisplay,
     textDisplay,
-    miscellaneousDisplay,
-    miscellaneousLeftDisplay,
-    miscellaneousRightDisplay,
+    auctionDisplay,
+    auctionLeftDisplay,
+    auctionRightDisplay,
+    tradeDisplay,
+    tradeLeftDisplay,
+    tradeRightDisplay,
 ) = displayer()
 
 
@@ -45,6 +55,7 @@ class Player:
         self.turn = True
         self.freeJailCard = 0
         self.lastDebt = -1
+        self.current = False
         self.auctioning = False
         self.bankruptcy = False
         self.players: Player[Player] = []
@@ -52,7 +63,8 @@ class Player:
 
     def __call__(self, players):
         self.players = players
-        displayer.write(historyDisplay, text=f"{currentTurn[LANG](self.name)}")
+        self.current = True
+        displayer.write(historyDisplay, text=f"{currentTurn(self.name)[LANG]}")
 
     def getFreeJailCard(self):
         self.freeJailCard += 1
@@ -85,7 +97,12 @@ class Player:
             (i for i, player in enumerate(self.players) if player.id == self.id), -1
         )
 
-    def choice(self, nbr, texts, multiple=False):
+    def clear(self, element):
+        if element == "text":
+            displayer.refreshElement(textDisplay)
+
+    def choose(self, nbr, texts, action=False):
+        if debug: return debug.pop(0)
         displayer.refreshElement(actionsDisplay)
 
         for i in range(len(texts)):
@@ -94,46 +111,46 @@ class Player:
         while True:
             flushinp()
             try:
-                x = std.getkey() if multiple else "0"
-                y = std.getkey()
-                if y == "q":
+                x = std.getkey()
+                if x == "q":
                     quit()
-                if y == "c":
+                if x == "c":
                     return None
-                res = int(x) + int(y)
+                if x == "e" and action:
+                    return x
+                res = int(x)
                 if res not in nbr:
                     raise Exception
                 return res
             except ValueError and Exception:
                 pass
-    
-    def askBid(self, bidAmount):
-        displayer.concat(miscellaneousLeftDisplay, f" {offers[LANG]} : ")
+
+    def chooseNumber(self, text, verify):
+        if debug: return debug.pop(0)
         
-        nb = ''
+        nb = ""
         while True:
+            displayer.write(textDisplay, text=f"{text[LANG]} : {nb}")
             x = std.getch()
-            
-            if x == 127 and len(nb) > 0:
+            if 48 <= x <= 57:
+                nb = f"{nb}{x-48}"
+            elif x == 127 and len(nb) > 0:
                 nb = nb[:-1]
-                coor = miscellaneousLeftDisplay.getyx()
-                miscellaneousLeftDisplay.delch(coor[0], coor[1]-1)
-                miscellaneousLeftDisplay.refresh()
-                
-            elif x == 10 and nb != '':
-                if int(nb) > bidAmount: break
-            elif 48 <= x <= 57:
-                nb = f'{nb}{x-48}'
-                displayer.concat(miscellaneousLeftDisplay, str(x-48))
-            
-            
-        displayer.concat(miscellaneousLeftDisplay, f' {moneySign[LANG]}')
+                displayer.refreshElement(textDisplay)
+            elif x == 99:
+                displayer.refreshElement(textDisplay)
+                return "c"
+            elif x == 10 and nb != "":
+                displayer.refreshElement(textDisplay)
+                if verify(int(nb)):
+                    break
+                nb = ""
+
         return int(nb)
-        
-        
+
     def rollDice(self):
         dices = np.random.randint(1, 7, size=2)
-        dices = [5, 3]
+        if debugDices: return debugDices.pop(0)
         self.totalDices = np.sum(dices)
 
         if dices[0] == dices[1]:
@@ -157,7 +174,7 @@ class Player:
         self.money -= amount
         player.money += amount
         displayer.write(
-            historyDisplay, text=f"{payToSentence[LANG](player.name)}",
+            historyDisplay, text=f"{payToSentence(player.name)[LANG]}",
         )
         displayer.write(
             transactionDisplay, text=f"{moneySign[LANG]} -{amount}",
@@ -263,7 +280,10 @@ class Player:
                     self.payTo(owner, amount)
             else:
                 if not self.forcedToNearest:
-                    while (x := self.choice([1, 2], [buy[LANG], auction[LANG]])) is None: pass
+                    while (
+                        x := self.choose([1, 2], [x[LANG] for x in [buy, auction]])
+                    ) is None:
+                        pass
                 else:
                     x = 1
                     self.forcedToNearest = False
@@ -282,7 +302,7 @@ class Player:
         if case["type"] == "chance" or case["type"] == "chest":
 
             displayer.write(
-                historyDisplay, text=drawCards[LANG](displayer.formatName(case["name"]))
+                historyDisplay, text=drawCards(displayer.formatName(case["name"]))[LANG]
             )
             active = CARDS[case["type"]]
             card = active[0]
@@ -295,7 +315,7 @@ class Player:
             or case["type"] == "parking"
         ):
             pass
-        
+
     def putForAuction(self, case):
         bidAmount = 1
         nbBidder = 0
@@ -304,46 +324,56 @@ class Player:
                 p.auctioning = True
                 nbBidder += 1
         bidCycled = cycle(self.players)
-        displayer.refreshElementWithoutBorder(miscellaneousLeftDisplay)
+        displayer.refreshElement(auctionDisplay)
+        displayer.refreshElementWithoutBorder(auctionLeftDisplay)
         while True:
-            
+
             while bidder := next(bidCycled):
-                if not bidder.auctioning or bidder.bankruptcy: continue
-                else: break
-                
-            displayer.refreshElementWithoutBorder(miscellaneousRightDisplay)
-            displayer.auctionInfo(miscellaneousRightDisplay, bidAmount, bidder.name, case, self.players)   
-             
+                if not bidder.auctioning or bidder.bankruptcy:
+                    continue
+                else:
+                    break
+
+            displayer.auctionInfo(bidAmount, bidder.name, case, self.players)
+
             if nbBidder == 1:
+                displayer.refreshElement(auctionDisplay)
                 bidder.winAuction(case, bidAmount)
                 break
-            
-            displayer.write(miscellaneousLeftDisplay, y=0, text=f"{bidder.name}")
-            
-            while (x := bidder.choice([1, 2], [bid[LANG], out[LANG]])) is None: pass
-            
+
+            displayer.write(auctionLeftDisplay, y=0, text=f"{bidder.name}")
+
+            while (x := bidder.choose([1, 2], [bid[LANG], out[LANG]])) is None:
+                pass
+
             if x == 1:
-                bidAmount = bidder.askBid(bidAmount)
+                bidAmount = bidder.chooseNumber(
+                    chooseNumberSentence, lambda x: x > bidAmount
+                )
+                displayer.concat(
+                    auctionLeftDisplay,
+                    f" {offers[LANG]} : {bidAmount}{moneySign[LANG]}",
+                )
             if x == 2:
-                displayer.concat(miscellaneousLeftDisplay, f" {isOut[LANG]}")
+                displayer.concat(auctionLeftDisplay, f" {isOut[LANG]}")
                 bidder.auctioning = False
                 nbBidder -= 1
-    
+
     def winAuction(self, case, bidAmount):
-        displayer.write(miscellaneousLeftDisplay, text=f"{self.name} {winAuction[LANG]}")
         self.auctioning = False
         self.buyByAuction(case, bidAmount)
-        displayer.refreshCounter('auction')
-        
+        displayer.refreshCounter("auction")
+
     def endTurn(self):
         self.countDouble = 0
         self.turn = True
         self.forcedToJail = False
         self.tryDouble = False
+        self.current = False
         displayer.refreshElements(
-            actionsDisplay, historyDisplay, textDisplay, miscellaneousDisplay
+            actionsDisplay, historyDisplay, textDisplay, auctionDisplay
         )
-        displayer.refreshCounter('history')
+        displayer.refreshCounter("history")
 
     def castCard(self, card, type):
         card["cast"](self)
@@ -352,25 +382,32 @@ class Player:
         displayer.write(textDisplay, y=2, text=f"{card['text'][LANG]}.")
 
     def buy(self, case):
-        states[
-            case["idFamily"], np.where(SETS[case["idFamily"]] == case["id"])[0][0], 0
-        ] = self.id
+        states[case["idFamily"], case["idInFamily"], 0] = self.id
         displayer.write(
             historyDisplay,
             text=f"{buySentence[LANG]} {displayer.formatName(case['name'])}",
         )
         self.transaction(-case["price"])
-        
+
     def buyByAuction(self, case, bid):
-        states[
-            case["idFamily"], np.where(SETS[case["idFamily"]] == case["id"])[0][0], 0
-        ] = self.id
-        self.transaction(-bid, display=False)
+        states[case["idFamily"], case["idInFamily"], 0] = self.id
+        displayer.write(
+            historyDisplay,
+            text=f"{(buySentence if self.current else playerBuySentence(self.name))[LANG]} {displayer.formatName(case['name'])}",
+        )
+        self.transaction(-bid)
+
+    def actionOnProperty(self, type: str):
+        ids = getattr(self, f"getIdOf{type.capitalize()}")()
+
+        id = self.chooseNumber(chooseTileSentence, lambda x: x in ids)
+        if id == "c":
+            return False
+
+        getattr(self, type)(TILES.loc[id])
 
     def mortgage(self, case):
-        states[
-            case["idFamily"], np.where(SETS[case["idFamily"]] == case["id"])[0][0], 1
-        ] = 1
+        states[case["idFamily"], case["idInFamily"], 1] = 1
         displayer.write(
             historyDisplay,
             text=f"{displayer.formatName(case['name'])} {mortgageSentence[LANG]}",
@@ -378,9 +415,7 @@ class Player:
         self.transaction(case["mortgagePrice"])
 
     def unmortgage(self, case):
-        states[
-            case["idFamily"], np.where(SETS[case["idFamily"]] == case["id"])[0][0], 1
-        ] = 0
+        states[case["idFamily"], case["idInFamily"], 1] = 0
         displayer.write(
             historyDisplay,
             text=f"{displayer.formatName(case['name'])} {unMortgageSentence[LANG]}",
@@ -388,9 +423,7 @@ class Player:
         self.transaction(-(case["mortgagePrice"] + case["mortgagePrice"] // 10))
 
     def build(self, case):
-        states[
-            case["idFamily"], np.where(SETS[case["idFamily"]] == case["id"])[0][0], 2
-        ] += 1
+        states[case["idFamily"], case["idInFamily"], 2] += 1
         displayer.write(
             historyDisplay,
             text=f"{buyBuildingSentence[LANG]} {displayer.formatName(case['name'])}",
@@ -398,16 +431,23 @@ class Player:
         self.transaction(-case["housePrice"])
 
     def sell(self, case):
-        states[
-            case["idFamily"], np.where(SETS[case["idFamily"]] == case["id"])[0][0], 2
-        ] -= 1
+        states[case["idFamily"], case["idInFamily"], 2] -= 1
         displayer.write(
             historyDisplay,
             text=f"{sellBuildingSentence[LANG]} {displayer.formatName(case['name'])}",
         )
         self.transaction(case["housePrice"] // 2)
 
-    def getIdOfMortgageable(self):
+    def getIdOfOwn(self):
+        res = []
+        for z in range(len(SETS)):
+            indexes = np.where(states[z, : len(SETS[z]), 0] == self.id)[0]
+            for i in indexes:
+                res.append(SETS[z][i])
+
+        return res
+
+    def getIdOfMortgage(self):
         res = []
         for z in range(len(SETS)):
             indexes = np.where(
@@ -420,11 +460,11 @@ class Player:
 
         return res
 
-    def getIdOfUnmortgageable(self):
+    def getIdOfUnmortgage(self):
         indexes = np.where((states[:, :, 0] == self.id) & (states[:, :, 1] == 1))
         return [SETS[i][y] for i, y in zip(*indexes)]
 
-    def getIdOfBuildable(self):
+    def getIdOfBuild(self):
         res = []
         for z in range(len(SETS)):
             if z <= 7:
@@ -441,7 +481,7 @@ class Player:
                     res.append(SETS[z][i])
         return res
 
-    def getIdOfSaleable(self):
+    def getIdOfSell(self):
         res = []
         for z in range(len(SETS)):
             if z <= 7:
@@ -463,16 +503,16 @@ class Player:
         if self.turn and not self.inJail:
             actions.append(0)
         # Mortgage
-        if bool(self.getIdOfMortgageable()) and not self.forcedToJail:
+        if bool(self.getIdOfMortgage()) and not self.forcedToJail:
             actions.append(1)
         # Unmortgage
-        if bool(self.getIdOfUnmortgageable()) and not self.forcedToJail:
+        if bool(self.getIdOfUnmortgage()) and not self.forcedToJail:
             actions.append(2)
         # Build
-        if bool(self.getIdOfBuildable()) and not self.forcedToJail:
+        if bool(self.getIdOfBuild()) and not self.forcedToJail:
             actions.append(3)
         # Sell
-        if bool(self.getIdOfSaleable()) and not self.forcedToJail:
+        if bool(self.getIdOfSell()) and not self.forcedToJail:
             actions.append(4)
         # End turn
         if (
@@ -498,7 +538,85 @@ class Player:
         if self.bankruptcy:
             actions = [9]
 
-        return self.choice(actions, [f"{ACTIONS[i][LANG]}" for i in actions])
+        return self.choose(
+            actions, [f"{ACTIONS[i][LANG]}" for i in actions], action=True
+        )
+
+    def trade(self):
+        ids = [p.id for p in self.players if not p.bankruptcy and not self.id == p.id]
+
+        id = self.chooseNumber(choosePlayerSentence, lambda x: x in ids)
+        if id == "c":
+            return False
+
+        trader: Player = self.players[id]
+        tradeDict = {
+            "get": {"money": 0, "properties": []},
+            "give": {"money": 0, "properties": []},
+        }
+
+        while True:
+            displayer.tradeInfo(tradeLeftDisplay, self.name, tradeDict["give"])
+            displayer.tradeInfo(tradeRightDisplay, trader.name, tradeDict["get"])
+
+            action = self.choose([1, 2, 3, 4, 5], [f"{a[LANG]}" for a in TRADE])
+            concerned = (self, "give") if action in [1, 2] else (trader, "get")
+
+            if action == 1 or action == 3:
+
+                ids = concerned[0].getIdOfOwn()
+                id = concerned[0].chooseNumber(chooseTileSentence, lambda x: x in ids)
+                if id == "c":
+                    continue
+                if id in tradeDict[concerned[1]]["properties"]:
+                    tradeDict[concerned[1]]["properties"].remove(id)
+                else:
+                    tradeDict[concerned[1]]["properties"].append(id)
+
+            if action == 2 or action == 4:
+
+                amount = concerned[0].chooseNumber(
+                    chooseNumberSentence, lambda x: x <= self.money
+                )
+                if amount == "c":
+                    continue
+                tradeDict[concerned[1]]["money"] = amount
+
+            if action == 5:
+                response = trader.choose([1, 2], [x[LANG] for x in [accept, decline]])
+                if response == 1:
+                    self.acceptTrade(trader, tradeDict)
+                if response == 2:
+                    self.refuseTrade(trader)
+                break
+
+            if action is None:
+                break
+
+            displayer.refreshElement(tradeDisplay)
+
+        displayer.refreshElement(tradeDisplay)
+
+    def acceptTrade(self, trader, dict):
+        trader.money += dict["give"]["money"]
+        self.money += dict["get"]["money"]
+        trader.money -= dict["get"]["money"]
+        self.money -= dict["give"]["money"]
+
+        for c in dict["get"]["properties"]:
+            case = TILES.loc[c]
+            states[case["idFamily"], case["idInFamily"], 0] = self.id
+
+        for c in dict["give"]["properties"]:
+            case = TILES.loc[c]
+            states[case["idFamily"], case["idInFamily"], 0] = trader.id
+
+        displayer.player(self)
+        displayer.player(trader)
+        displayer.write(historyDisplay, text=f"{trader.name} {acceptTrade[LANG]}")
+
+    def refuseTrade(self, trader):
+        displayer.write(historyDisplay, text=f"{trader.name} {declineTrade[LANG]}")
 
     def turnOver(self, creditor):
         creditor.own += states
