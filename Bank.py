@@ -1,14 +1,8 @@
-from Displayer import Displayer
+from dataclasses import dataclass
 
 
-displayer = Displayer()
-
-
+@dataclass
 class Bank:
-    def __init__(self) -> None:
-        self.id = -1
-        self.remainingHouses = 32
-        self.remainingHotels = 12
-
-    def __call__(self):
-        displayer.bank(self)
+    id = -1
+    remaining_houses = 32
+    remaining_hotels = 12

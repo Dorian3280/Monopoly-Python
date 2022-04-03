@@ -1,140 +1,52 @@
-from curses import wrapper
-from itertools import cycle
-from Bank import Bank
-from Players import Player
-from Displayer import Displayer
-from Tiles import *
-from sentences import *
-from constants import *
+import socket
+import threading
 
+from monopoly import Monopoly
 
-def main(std) -> int:
+HEADER = 8
+PORT = 5050
+SERVER = '127.0.0.1'
+# SERVER = '192.168.1.16'
+ADDRESS = (SERVER, PORT)
+FORMAT = 'utf-8'
+DISCONNECT_MSG = "QUIT"
+CONNECT_MSG = "CONN"
+START_MSG = "GO"
 
-    Displayer.initColor()
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.bind(ADDRESS)
 
-    numberOfPlayers = NB_PLAYERS
-    players = [Player(i, f"{genName[LANG]} {i+1}") for i in range(numberOfPlayers)]
-    bank = Bank()
+def handle_client(conn, address):
+    print(f"[NEW CONNECTION] {address} connected")
 
-    cycled = cycle(players)
-    lastPlayer = -1
+    connected = True
+    while connected:
+        response = conn.recv(HEADER).decode(FORMAT)
+        if response != '':
+            print('response : ', response)
+            if response == CONNECT_MSG:
+                conn.send("200".encode(FORMAT))
+
+            if response == DISCONNECT_MSG:
+                break
+
+    conn.close()
+
+def start():
+    print(f"[LISTENING] Server is listening on {SERVER}:{PORT}")
+
     while True:
-        player = next(cycled)
-        player(players, bank)
-        bank()
+        print(threading.activeCount() - 1)
+        server.listen()
+        conn, address = server.accept()
+        print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
+        thread = threading.Thread(target=handle_client, args=(conn, address))
+        thread.start()
 
-        if player.bankruptcy:
-            continue
+        if (threading.activeCount() - 1) == 2:
+            monopoly.start_game()
 
-        if lastPlayer == player.id:
-            print(congratulations(players[0].name)[LANG])
-            break
-
-        lastPlayer = player.id
-
-        if player.inJail or player.countTurn:
-            player.countTurn += 1
-
-        while True:
-
-            action = 0
-
-            if player.moveOutOfJailBool is False:
-                action = player.checkActions()
-
-            # Roll dice
-            if action == 0:
-
-                if player.payFine:
-                    player.payFine = False
-                    player.countTurn = 0
-
-                if not player.moveOutOfJailBool:
-                    player.rollDice()
-                else:
-                    player.moveOutOfJailBool = False
-
-                player.moveByDice(player.totalDices)
-
-                while True:
-
-                    player.loopWhile = False
-                    player.landOnProperty()
-
-                    if not player.loopWhile:
-                        break
-
-            # Mortgage
-            if action == 1:
-                if not player.actionOnProperty("mortgage"):
-                    continue
-
-            # Unmortage
-            if action == 2:
-                if not player.actionOnProperty("unmortgage"):
-                    continue
-
-            # Build
-            if action == 3:
-                if not player.actionOnProperty("build"):
-                    continue
-
-            # Sell
-            if action == 4:
-                if not player.actionOnProperty("sell"):
-                    continue
-
-            # End of Turn
-            if action == 5:
-                player.endTurn()
-                break
-
-            # Try Double
-            if action == 6:
-                player.rollDice()
-
-                if player.double:
-                    player.moveOutOfJail()
-                    player.turn = False
-
-                elif player.countTurn == 3:
-                    player.moveOutOfJail()
-                    player.transaction(-50)
-
-                player.tryDouble = True
-
-            # Pay Fine
-            if action == 7:
-                player.payFine = True
-                player.outOfJail()
-                player.transaction(-50)
-
-            # Use Get out of jail Free
-            if action == 8:
-                player.outOfJail()
-                player.useFreeJailCard()
-
-            # Get out of the game
-            if action == 9:
-                player.endTurn()
-                break
-
-            if action == "e":
-                player.trade()
-
-            if player.money < 0:
-                overdrawn = abs(player.money)
-                heritage = player.getHeritage()
-                if overdrawn > heritage:
-                    player.giveProperties(player.lastDebt, player.getIdOfOwn())
-                    if player.lastDebt != -1:
-                        id = player.lastDebt.getIndexByID()
-                        players[id].money += player.money
-                        players[id].freeJailCard += player.freeJailCard
-
-                    player.gameOver()
-
-    return 0
-
-
-wrapper(main)
+if __name__ == "__main__":
+    monopoly = Monopoly()
+    monopoly.start_game()
+    print("[Starting] server is starting...")
